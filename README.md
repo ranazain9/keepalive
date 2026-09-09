@@ -2,10 +2,12 @@
 ### Autonomous Real-Time Voice & Visual Emergency Rescue Cockpit
 **Built for the AssemblyAI Voice Agent Hackathon on lablab.ai**
 
-[![AssemblyAI](https://img.shields.io/badge/AssemblyAI-Real--Time%20STT%20%26%20LLM%20Gateway-blue?style=for-the-badge&logo=soundcharts)](https://www.assemblyai.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![Safety: Clinical Shield](https://img.shields.io/badge/Safety-Deterministic%20FSM%20Shield-red?style=for-the-badge)](https://github.com)
-[![Protocol: AHA-BLS](https://img.shields.io/badge/Protocol-AHA%20BLS%20110%20BPM-orange?style=for-the-badge)](https://cpr.heart.org)
+<p align="left">
+  <a href="https://www.assemblyai.com/"><img src="https://img.shields.io/badge/AssemblyAI-Real--Time%20STT%20%26%20LLM%20Gateway-blue?style=for-the-badge&logo=soundcharts" alt="AssemblyAI" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License: MIT" /></a>
+  <a href="https://cpr.heart.org"><img src="https://img.shields.io/badge/Protocol-AHA%20BLS%20110%20BPM-orange?style=for-the-badge" alt="AHA BLS 110 BPM" /></a>
+  <a href="https://github.com/ranazain9/keepalive"><img src="https://img.shields.io/badge/Safety-Deterministic%20FSM%20Shield-red?style=for-the-badge" alt="Safety Shield" /></a>
+</p>
 
 > *"In computer networking, a `keep-alive` packet maintains the connection.*  
 > *In emergency medicine, **KeepAlive** maintains human life—pumping oxygenated blood to the brain and stopping lethal hemorrhage until paramedics arrive."*
@@ -179,7 +181,7 @@ When first responders arrive, 2–3 minutes are typically wasted questioning an 
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/keepalive.git
+git clone https://github.com/ranazain9/keepalive.git
 cd keepalive
 ```
 
@@ -224,5 +226,3 @@ Open `http://localhost:8000` in your browser. Allow microphone access to initiat
 ---
 
 *Authored with ❤️ for the **AssemblyAI Voice Agent Hackathon** on lablab.ai.*
-#   k e e p a l i v e  
- 
