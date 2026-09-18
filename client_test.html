@@ -996,6 +996,7 @@
       <div class="modal-btn-row">
         <button class="btn-secondary" onclick="speakHandoffReport()">🔊 Read Spoken Report Aloud</button>
         <button class="btn-primary" onclick="copyHandoffJson()">📋 Copy JSON Payload</button>
+        <button class="btn-primary" onclick="resetSession()" style="background: linear-gradient(135deg, #059669 0%, #10B981 100%); border-color: #34D399;">🔄 Start New Rescue Session</button>
       </div>
     </div>
   </div>
@@ -1475,8 +1476,35 @@
         highlightCompanionCard();
       }
 
-      // EMS Handoff
-      if (handoffCard && !latestHandoffData) {
+      // EMS Handoff & Paramedic Arrival Lockdown
+      if (a2Status === "PARAMEDICS_ARRIVED_LOCKED" || a3Status === "INCIDENT_CONCLUDED") {
+        stopMetronome();
+        stopRecording();
+        const micBtn = document.getElementById("mic-btn");
+        if (micBtn) {
+          micBtn.classList.remove("recording");
+          micBtn.classList.add("disabled");
+          micBtn.style.pointerEvents = "none";
+          micBtn.style.opacity = "0.5";
+          setElText("mic-label", "Incident Concluded · Paramedics in Charge");
+        }
+        if (badge) {
+          badge.innerText = "🚑 PARAMEDICS ON SCENE: INCIDENT CONCLUDED & LOCKED";
+          badge.className = "protocol-status locked";
+          badge.style.background = "rgba(59, 130, 246, 0.4)";
+          badge.style.borderColor = "rgba(59, 130, 246, 0.7)";
+          badge.style.color = "#FFFFFF";
+        }
+        setElText("companion-lifecycle-badge", "INCIDENT CONCLUDED (Handoff to Paramedics)");
+        setElStyle("companion-lifecycle-badge", "color", "var(--accent-blue)");
+        setElStyle("companion-lifecycle-badge", "background", "rgba(59, 130, 246, 0.15)");
+        setElStyle("companion-lifecycle-badge", "border", "1px solid rgba(59, 130, 246, 0.3)");
+        if (handoffCard) {
+          latestHandoffData = handoffCard;
+          populateHandoffModal(handoffCard);
+          setTimeout(() => openHandoffModal(), 800);
+        }
+      } else if (handoffCard && !latestHandoffData) {
         latestHandoffData = handoffCard;
         populateHandoffModal(handoffCard);
         openHandoffModal();
@@ -2144,7 +2172,13 @@
         }
         document.querySelectorAll(".take-chip").forEach(chip => chip.classList.remove("active-step"));
         if (liveRunClockInterval) clearInterval(liveRunClockInterval);
-        setElText("live-run-clock", "[00:15 / 01:25]");
+        const micBtn = document.getElementById("mic-btn");
+        if (micBtn) {
+          micBtn.classList.remove("disabled");
+          micBtn.style.pointerEvents = "auto";
+          micBtn.style.opacity = "1.0";
+          setElText("mic-label", "Hold or Click to Speak");
+        }
         closeHandoffModal();
       } catch (e) {
         console.error("Reset failed:", e);
@@ -2161,10 +2195,17 @@
         btn.addEventListener("click", handleMicClick);
       }
     }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", setupMicButtonListeners);
-    } else {
+
+    // Auto-reset backend state and setup listeners on page load / refresh
+    function initPage() {
       setupMicButtonListeners();
+      resetSession();
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initPage);
+    } else {
+      initPage();
     }
   </script>
 </body>

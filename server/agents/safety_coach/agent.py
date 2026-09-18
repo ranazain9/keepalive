@@ -16,10 +16,12 @@ from server.core.logger import logger
 PARAMEDIC_ARRIVAL_TRIGGERS = [
     "paramedics are here", "paramedics arrived", "paramedics have arrived", "paramedic is here",
     "paramedic", "paramedics", "paramites are here", "paramites", "paramite",
+    "pyramids are here", "pyramids arrived", "pyramids", "pyramid", "pyramid are here",
+    "paramed", "peramedics", "peramedic", "para medics", "pair of medics", "para medic",
     "ambulance is here", "ambulance arrived", "ambulance has arrived", "ambulance",
     "ems is here", "ems arrived", "ems has arrived", "ems just arrived", "ems",
     "medics are here", "medics arrived", "medic is here",
-    "first responders are here", "first responders arrived",
+    "first responders are here", "first responders arrived", "help is here", "help arrived",
     "police are here", "they are here now", "they just arrived"
 ]
 
