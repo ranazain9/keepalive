@@ -40,7 +40,7 @@ ENV/
 env.bak/
 venv.bak/
 
-# Audio Recordings & Temporary Media Dumps (Large files)
+# Audio & Video Recordings & Temporary Media Dumps (Large files)
 *.wav
 *.mp3
 *.m4a
@@ -48,8 +48,11 @@ venv.bak/
 *.ogg
 *.webm
 *.raw
+*.mp4
+*.mkv
 recordings/
 temp_audio/
+scratch/
 
 # Unit Tests & Coverage
 htmlcov/
@@ -89,6 +92,7 @@ generate_docs.py
 EXTERNAL_REVIEW_PROMPT.md
 docs_drafts/
 review_notes/
+lawfiles/
 
 # Operating System Files
 .DS_Store

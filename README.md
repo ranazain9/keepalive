@@ -21,11 +21,16 @@ When someone collapses from sudden cardiac arrest or suffers catastrophic arteri
 Standard 911 calls are voice-only and prone to pacing confusion. Traditional mobile first-aid apps are static text booklets that require tapping through menus—which is **physically impossible because the rescuer's hands are busy performing chest compressions or holding pressure on bleeding wounds.**
 
 **KeepAlive** is a zero-touch, hands-free emergency voice agent and reactive Heads-Up Display (HUD):
-* **AI Listens:** Captures natural human emergency cries in $<300\text{ms}$ via **AssemblyAI Real-Time WebSocket Streaming**.
+* **AI Listens & Converses:** Powered by the **AssemblyAI Voice Agent API** on a single unified WebSocket (Universal-3 Pro STT + LLM + TTS + Turn-Taking + Tool Calling).
 * **Deterministic Protocols Decide:** Employs a **Sub-10ms Semantic Vector Router** and an immutable Finite State Machine (AHA BLS Guidelines & DHS Stop the Bleed). **Generative AI is strictly isolated from critical medical actions.**
-* **Voice Guides:** Delivers non-fatiguing acoustic metronome clicks at **110 BPM** with concise, commanding voice directives.
-* **Visuals Reinforce:** Flight-instrument style cockpit displaying a **110 BPM pulsing heart ring** and dynamic anatomical wound guidelines visible from 10 feet away.
-* **Bounded Companion:** Answers high-panic hesitations (*"Did I break a rib?"*) in $\le 18$ words without stopping the metronome via **AssemblyAI LLM Gateway**.
+* **Voice Guides (Hybrid Latency Architecture):**
+  - **~15ms Directives (Deterministic Local Cache):** Immediate, uncompromised emergency instructions (*"Call 911 now on speaker! Roll flat. Push center of chest."*) ensuring zero delay when seconds count.
+  - **~1.0s Dynamic Dialogue (AssemblyAI Voice Agent API):** Natural turn-taking and micro-Q&A (*"Did I break a rib?"*) without breaking compression pace.
+  - Real-time **Web Audio API metronome ducking (-14 dB)** under spoken commands, maintaining unbroken 110 BPM acoustic clicks.
+* **Visuals Reinforce:** Interactive **3D Anatomical Cockpit (Three.js WebGL)** featuring an authentic 3D human patient flat on the floor and realistic 3D interlocked CPR hands actively compressing down 2 inches at 110 BPM, complete with 360° touch/voice orbit controls allowing rescuers to verify real hand positioning and straight 90° arm angles from across the room.
+* **Dual-Latency HUD Telemetry:** Explicitly displays live timing metrics:
+  $$\text{Protocol Directive: } \sim 15\text{ms} \quad\vert\quad \text{AssemblyAI Live Agent: } \sim 1.0\text{s}$$
+* **911 Protocol-Compliant Dispatch Bar:** Prominent one-tap speakerphone trigger ensuring immediate EMS dispatch prior to compressions.
 * **Automated EMS Handoff:** Instantly compiles an immutable incident timeline for arriving paramedics.
 
 ---
@@ -40,7 +45,7 @@ flowchart TD
 
     subgraph INGESTION ["2. Low-Latency Ingestion (<300ms)"]
         B["🎙️ Phone Mic / Web Audio API (16kHz PCM)"]
-        C["⚡ AssemblyAI Real-Time Streaming WebSocket\n(Medical Word Boost Applied)"]
+        C["⚡ AssemblyAI Voice Agent API\n(Single WebSocket: Universal-3 Pro STT + LLM + TTS)"]
         B --> C
     end
 
@@ -53,16 +58,16 @@ flowchart TD
         direction TB
         LOCK["🔒 PROTOCOL LOCK ENGAGED: AHA-BLS Sudden Cardiac Arrest"]
         
-        subgraph BRAIN_1 ["BRAIN #1: Deterministic FSM (Medical Path)"]
-            E1["❌ Zero Generative AI"]
-            E2["🔊 Voice: 'Put on speaker. Flat on back. Push center of chest.'"]
+        subgraph BRAIN_1 ["BRAIN #1: Deterministic Engine (Medical Path)"]
+            E1["⚡ Zero-Latency Pre-Recorded Directives (~15ms)"]
+            E2["🔊 Voice: 'Call 911 now on speaker! Roll flat. Push center of chest.'"]
             E3["❤️ 110 BPM Audiovisual Metronome Engine"]
             E4["🚨 Agonal Gasping Detector"]
         end
 
-        subgraph BRAIN_2 ["BRAIN #2: AssemblyAI LLM Gateway (Companion)"]
-            F1["🧠 In-Crisis Micro-Q&A (Max 18 Words)"]
-            F2["💬 'Did I break a rib?' ➡️ 'Rib pop is normal. Keep pushing!'"]
+        subgraph BRAIN_2 ["BRAIN #2: AssemblyAI Voice Agent API (~1s Dynamic Turn-Taking)"]
+            F1["🧠 Native WebSocket (Universal-3 Pro STT + LLM + TTS + Turn-Taking)"]
+            F2["💬 Dynamic In-Crisis Q&A: 'Did I break a rib?' ➡️ 'Rib pop is normal. Keep pushing!'"]
             F3["📋 Paramedic EMS Handoff Generation"]
             F4["🧘 Post-Event Grounding & Breathing Support"]
         end
@@ -71,9 +76,11 @@ flowchart TD
         LOCK -.-> BRAIN_2
     end
 
-    subgraph OUTPUT_TIER ["5. Dual Interface Outputs"]
-        G1["🔊 Phone Speaker: Acoustic 110 BPM Clicks + Spoken Directives"]
-        G2["📱 Visual HUD: Glowing Pulsing Ring + Hand Sternum Target"]
+    subgraph OUTPUT_TIER ["5. Dual Interface Outputs & Telemetry"]
+        G1["🔊 Phone Speaker: Acoustic 110 BPM Clicks + Ducked Audio Directives / Voice Agent"]
+        G2["📱 3D Interactive Cockpit: Realistic Patient Body + Interlocked Hands (110 BPM 360° Orbit)"]
+        G3["📊 Live Latency Telemetry: Protocol: ~15ms · AssemblyAI Live Agent: ~1.0s"]
+        G4["🚨 One-Tap 911 Speakerphone Emergency Dispatch Bar"]
     end
 
     subgraph EMS_HANDOFF ["6. Paramedic Transfer"]
@@ -86,14 +93,16 @@ flowchart TD
     D --> LOCK
     BRAIN_1 --> G1
     BRAIN_1 --> G2
+    BRAIN_1 --> G3
+    BRAIN_1 --> G4
     G1 & G2 --> H
     H --> I
     I --> BRAIN_2
     BRAIN_2 --> J
 ```
 
-* **Brain #1 (Deterministic FSM):** Zero generative AI on the medical path. All CPR steps, metronome pacing, and tourniquet decisions are hard-coded to peer-reviewed guidelines.
-* **Brain #2 (AssemblyAI LLM Gateway):** Handles bounded in-crisis micro-clarifications ($\le 18$ words), empathetic post-event grounding, and structured EMS handoff synthesis.
+* **Brain #1 (Deterministic Safety Engine):** Zero generative AI on the medical path. Core AHA-protocol directives play in ~15ms from pre-rendered audio cache.
+* **Brain #2 (AssemblyAI Voice Agent API):** Handles dynamic conversational turn-taking, bounded micro-clarifications ($\le 18$ words), empathetic post-event grounding, and structured EMS handoff synthesis in ~1.0s over a single native WebSocket.
 
 ---
 
@@ -103,7 +112,7 @@ KeepAlive is an extensible emergency engine covering all primary life-threatenin
 
 | Emergency Scenario | Clinical Standard | Audio & Visual Directives |
 | :--- | :--- | :--- |
-| **1. Sudden Cardiac Arrest** | AHA BLS 2020–2025 | Bypasses layperson pulse checks. Initiates **110 BPM acoustic clicks + pulsing HUD heart**. Detects agonal snoring/gasping and warns caller not to stop. |
+| **1. Sudden Cardiac Arrest** | AHA BLS 2020–2025 | Bypasses layperson pulse checks. Initiates **110 BPM acoustic clicks + Realistic 3D Human Patient & Interlocked CPR Hands**. Renders 2-inch compression depth and full chest recoil in real time. Rescuers can orbit 360° to verify exact sternum hand placement and 90° arm angle. Detects agonal gasping and warns caller not to stop. |
 | **2. Catastrophic Bleeding** | DHS Stop the Bleed | Exposes cut. Rescuer speaks limb location (*"Right thigh"*). HUD draws tourniquet guideline **2–3 inches above wound**. Sounds alarm if neck is mentioned. |
 | **3. Airway Choking** | Adult/Child Heimlich | Directs 5 rapid inward/upward abdominal thrusts above the navel. **Dynamic Failover:** Auto-transitions to CPR if the victim goes limp. |
 | **4. Acute Anaphylaxis** | Auto-Injector (EpiPen) | Coaches: *"Blue to the sky, orange to the thigh"*. Features a **3-second radial hold meter** and a 10-second massage reminder. |
@@ -128,7 +137,8 @@ KeepAlive is an extensible emergency engine covering all primary life-threatenin
 [00:10] Rescuer locks hands on chest.
         ↳ Web Audio API launches synchronized 110 BPM acoustic clicks.
         ↳ Audio: "Push hard and fast to this beat. Down 2 inches."
-        ↳ HUD: Pulsing red heart expands and contracts at 110 BPM.
+        ↳ 3D Cockpit: Realistic 3D human body appears flat on floor. 3D interlocked hands pump sternum at 110 BPM.
+        ↳ Rescuer inspects 360° top view to verify hand placement between nipples.
 
 [01:15] Rescuer (Panicking): "I heard a loud pop sound, did I break his rib?!"
         ↳ Metronome continues clicking at 110 BPM without pause.
@@ -155,7 +165,13 @@ Utilizes 16kHz PCM streaming with domain-specific **Medical Word Boosting** (`st
 ### 3. AssemblyAI LLM Gateway for Bounded Companion
 Replaces the deprecated LeMUR API with modern, low-latency **AssemblyAI LLM Gateway** execution. Bounded by strict prompt contracts (`MAX_RESPONSE_WORDS = 18`) to deliver immediate reassurance without derailing ongoing compressions.
 
-### 4. Paramedic EMS Handoff Card
+### 4. Interactive 3D Anatomical Cockpit (Three.js WebGL)
+Replaces abstract flat graphics or wireframes with a full **3D clinical simulation**:
+* **Realistic Supine Patient Model:** 3D human body positioned flat on the floor with visible thoracic landmarks.
+* **Realistic 3D Interlocked CPR Hands:** Accurately models rescuer hand interlocking and heel-of-palm sternum placement, actively compressing 2 inches and releasing for full chest recoil at 110 BPM.
+* **360° Touch & Voice Orbit Inspection:** Rescuers can rotate/zoom around the body or use voice commands (*"Show top view"*, *"Side view"*) to verify their hands are squarely between the nipples and elbows are locked at 90°.
+
+### 5. Paramedic EMS Handoff Card
 When first responders arrive, 2–3 minutes are typically wasted questioning an overwhelmed bystander. KeepAlive delivers a complete operational log:
 ```json
 {
@@ -169,6 +185,13 @@ When first responders arrive, 2–3 minutes are typically wasted questioning an 
   "handoff_timestamp": "2026-09-09T12:00:00Z"
 }
 ```
+
+### 6. Zero-Latency Acoustic Pipeline (AEC, Ducking & Pre-Rendered Audio)
+Solving speakerphone acoustic feedback and audio collisions when the phone rests on the floor:
+* **Hardware AEC & Gating:** Disables mic AGC (`autoGainControl: false`) to prevent amplifying metronome clicks during caller silence, paired with a client-side recognizer gate that suppresses echo transcription while agent directives play.
+* **Pre-Rendered Deterministic Audio:** All core clinical directives are bundled locally as pre-rendered, loudness-normalized (-14 LUFS) assets for **0ms playback latency** and full offline capability if network connectivity degrades.
+* **Web Audio API Ducking Envelope:** When a directive plays, metronome gain ramps from `1.0` to `0.20` (-14 dB) in 40ms, sustaining the beat softly in the background before releasing back to `1.0` in 150ms.
+* **Instant Caller Barge-In:** A high-threshold VAD listener immediately halts directive playback (`sourceNode.stop()`) if the rescuer shouts an urgent question.
 
 ---
 

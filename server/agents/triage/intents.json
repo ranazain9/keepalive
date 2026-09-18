@@ -1,0 +1,101 @@
+{
+  "intents": {
+    "CARDIAC_ARREST": {
+      "protocol_id": "AHA_BLS_CPR_110BPM",
+      "line_1_directive": "Don't panic. 911 CAD dispatch has been alerted with your exact GPS location. We need to start CPR immediately! Lay them flat on firm ground.",
+      "clarifying_probe": "Is the patient breathing normally, yes or no?",
+      "training_phrases": [
+        "not breathing",
+        "collapsed on the floor",
+        "dad fell down and won't wake up",
+        "no pulse",
+        "unconscious not moving",
+        "chest isn't moving",
+        "passed out cold turning blue",
+        "heart stopped",
+        "gasping for air strange snoring noise",
+        "making terrible grunting sounds not responsive",
+        "stopped breathing completely blue lips",
+        "sudden collapse on ground",
+        "help he is dead not breathing",
+        "he passed out and has no pulse",
+        "no respira no tiene pulso",
+        "ayuda se cayo no respira",
+        "sans nahi aa rahi behosh hai",
+        "dil band ho gaya hai"
+      ],
+      "keywords": ["breathing", "collapsed", "pulse", "unresponsive", "passed out", "heart", "blue", "gasping", "snoring", "respira", "sans", "behosh"]
+    },
+    "ARTERIAL_BLEED": {
+      "protocol_id": "DHS_STOP_THE_BLEED",
+      "line_1_directive": "Call 911 on speaker now! Bleeding protocol locked. Rip or cut away clothing immediately to expose the bare wound.",
+      "clarifying_probe": "Is blood spurting or pooling rapidly, yes or no?",
+      "training_phrases": [
+        "blood spurting everywhere",
+        "bleeding out cut an artery",
+        "deep cut blood won't stop",
+        "stabbed in the leg bleeding heavily",
+        "chainsaw accident blood pooling",
+        "severed limb severe bleeding",
+        "gushing bright red blood",
+        "arterial hemorrhage",
+        "blood everywhere from deep wound",
+        "huge laceration spurting blood",
+        "mucha sangre saliendo",
+        "sangrado severo ayuda",
+        "bohot khoon beh raha hai"
+      ],
+      "keywords": ["blood", "spurting", "bleeding", "cut", "artery", "wound", "stabbed", "laceration", "gushing", "sangre", "khoon"]
+    },
+    "CHOKING": {
+      "protocol_id": "HEIMLICH_MANEUVER",
+      "line_1_directive": "Stand behind them. Wrap your arms around their waist. If they can cough or speak, encourage them to keep coughing.",
+      "clarifying_probe": "Can the person make any sound or cough, yes or no?",
+      "training_phrases": [
+        "choking on food",
+        "can't breathe swallowed meat",
+        "clutching his throat cannot speak",
+        "food stuck in throat choking",
+        "swallowed a toy and choking",
+        "silent choking hands on neck",
+        "he is choking and turning red",
+        "airway blocked cannot cough",
+        "se esta ahogando con comida",
+        "gala band ho gaya hai kuch phans gaya hai"
+      ],
+      "keywords": ["choking", "choke", "swallowed", "throat", "food", "cough", "airway", "ahogando", "ahoga"]
+    },
+    "ANAPHYLAXIS": {
+      "protocol_id": "EPIPEN_AUTO_INJECTOR",
+      "line_1_directive": "Severe allergic reaction locked. Find their EpiPen or epinephrine auto-injector immediately!",
+      "clarifying_probe": "Is their throat swelling or are they struggling to breathe, yes or no?",
+      "training_phrases": [
+        "severe allergic reaction",
+        "allergic to peanuts throat closing",
+        "swelling lips wheezing cannot breathe",
+        "bee sting allergic reaction epipen",
+        "ate nuts face is swelling up",
+        "anaphylactic shock need epipen",
+        "reaccion alergica grave epipen",
+        "allergy ki wajah se gala band ho raha hai"
+      ],
+      "keywords": ["allergic", "allergy", "peanuts", "epipen", "swelling", "wheezing", "sting", "anaphylaxis", "alergia"]
+    },
+    "OVERDOSE": {
+      "protocol_id": "NALOXONE_NARCAN_DEPLOYMENT",
+      "line_1_directive": "Opioid overdose locked. Check if Narcan or Naloxone nasal spray is available in the house.",
+      "clarifying_probe": "Are their pupils tiny like pinpoints, yes or no?",
+      "training_phrases": [
+        "opioid overdose passed out",
+        "took too many pills pinpoint pupils",
+        "fentanyl overdose not waking up",
+        "heroin overdose need narcan",
+        "drug overdose lips blue shallow breathing",
+        "passed out with empty pill bottle",
+        "sobredosis de pastillas",
+        "bohot sari dawaiyan kha li hain behosh hai"
+      ],
+      "keywords": ["overdose", "pills", "fentanyl", "heroin", "narcan", "naloxone", "pupils", "sobredosis"]
+    }
+  }
+}

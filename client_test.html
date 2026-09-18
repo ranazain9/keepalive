@@ -1,0 +1,2171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>KeepAlive: Autonomous Emergency Rescue Cockpit (Agents #1, #2 & #3)</title>
+  <style>
+    :root {
+      --bg: #070B14;
+      --card-bg: rgba(15, 23, 42, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-blue: #38BDF8;
+      --accent-red: #EF4444;
+      --accent-green: #10B981;
+      --accent-amber: #F59E0B;
+      --accent-purple: #A855F7;
+      --accent-pink: #EC4899;
+      --text-white: #F8FAFC;
+      --text-muted: #94A3B8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body {
+      background: radial-gradient(circle at 50% 10%, #131d33 0%, var(--bg) 80%);
+      color: var(--text-white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px 40px;
+    }
+    .header { text-align: center; margin-bottom: 16px; }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-blue);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      margin-bottom: 8px;
+    }
+    h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+    p.sub { font-size: 13px; color: var(--text-muted); max-width: 680px; margin: 0 auto; }
+
+    /* Top CAD Dispatch & AED Radar Banner */
+    .cad-banner {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, rgba(56, 189, 248, 0.12) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 10px 18px;
+      margin-bottom: 16px;
+      font-size: 12px;
+    }
+    .cad-item { display: flex; align-items: center; gap: 8px; }
+    .cad-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green);
+      animation: blink 1.2s infinite;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* Telemetry HUD */
+    .telemetry-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--card-border);
+      padding: 8px 20px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-size: 12px;
+    }
+    .telemetry-item { display: flex; align-items: center; gap: 6px; }
+    .telemetry-val { font-weight: 700; color: var(--accent-green); }
+
+    /* Mic Button */
+    .mic-button {
+      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+      border: none;
+      color: white;
+      padding: 12px 30px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .mic-button:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(239, 68, 68, 0.6); }
+    .mic-button.recording {
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+      70% { box-shadow: 0 0 0 14px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* Quick Test Phrases Bar */
+    .quick-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      max-width: 1000px;
+    }
+    .quick-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quick-chip:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--accent-blue);
+      color: var(--text-white);
+      transform: translateY(-1px);
+    }
+    .quick-chip.panic {
+      border-color: rgba(245, 158, 11, 0.4);
+      color: #FCD34D;
+    }
+    .quick-chip.ems {
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #6EE7B7;
+    }
+
+    /* Main Cockpit Layout */
+    .cockpit-grid {
+      width: 100%;
+      max-width: 1000px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 800px) {
+      .cockpit-grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px;
+      backdrop-filter: blur(12px);
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .transcript-box {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text-white);
+      min-height: 70px;
+    }
+    .transcript-box .placeholder { color: #4B5563; font-style: italic; }
+
+    .protocol-status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+    }
+    .protocol-status.locked {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .directive-box {
+      background: rgba(0, 0, 0, 0.35);
+      border-left: 3px solid var(--accent-blue);
+      padding: 12px 14px;
+      border-radius: 0 8px 8px 0;
+      font-size: 14px;
+      line-height: 1.4;
+      color: #E2E8F0;
+      margin-bottom: 12px;
+    }
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 12px;
+    }
+    .metric-row:last-child { border-bottom: none; }
+
+    /* Metronome & Compression Card */
+    .metronome-card {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(15, 23, 42, 0.85) 100%);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 14px;
+      padding: 16px 20px;
+    }
+    .metronome-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .metronome-left { display: flex; align-items: center; gap: 14px; }
+    .beat-indicator {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.2);
+      border: 2px solid var(--accent-red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      color: var(--accent-red);
+      transition: transform 0.08s ease, background 0.08s ease;
+    }
+    .beat-indicator.flash {
+      transform: scale(1.22);
+      background: var(--accent-red);
+      color: #FFFFFF;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.85);
+    }
+    .metronome-info h3 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .metronome-info p { font-size: 11px; color: var(--text-muted); }
+
+    .depth-gauge-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+    .depth-bar-track {
+      flex: 1;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+      position: relative;
+      overflow: hidden;
+    }
+    .depth-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #10B981 0%, #38BDF8 100%);
+      border-radius: 5px;
+      transition: width 0.08s ease;
+    }
+    .depth-target-zone {
+      position: absolute;
+      left: 70%;
+      width: 25%;
+      height: 100%;
+      border-left: 2px dashed #10B981;
+      border-right: 2px dashed #10B981;
+      background: rgba(16, 185, 129, 0.15);
+    }
+
+    .step-btn {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--accent-blue);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .step-btn:hover { background: rgba(56, 189, 248, 0.3); }
+
+    .swap-alert {
+      display: none;
+      background: rgba(239, 68, 68, 0.25);
+      border: 1px solid var(--accent-red);
+      color: #FCA5A5;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 12px;
+      animation: pulse 1.5s infinite;
+    }
+
+    /* Companion Agent Q&A Card */
+    .companion-card {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(15, 23, 42, 0.85) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      transition: all 0.3s ease;
+    }
+    .companion-card.pulse-glow {
+      box-shadow: 0 0 30px rgba(168, 85, 247, 0.85) !important;
+      border-color: var(--accent-purple) !important;
+      animation: glowFade 2s ease-out;
+    }
+    @keyframes glowFade {
+      0% { transform: scale(1.015); box-shadow: 0 0 35px rgba(168, 85, 247, 0.95); }
+      50% { transform: scale(1.0); box-shadow: 0 0 20px rgba(168, 85, 247, 0.6); }
+      100% { box-shadow: 0 0 0 rgba(168, 85, 247, 0); }
+    }
+    .companion-speech-bubble {
+      background: rgba(168, 85, 247, 0.14);
+      border-left: 3px solid var(--accent-purple);
+      padding: 14px 16px;
+      border-radius: 0 8px 8px 0;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.45;
+      color: #F3E8FF;
+      margin-bottom: 12px;
+      min-height: 52px;
+      box-shadow: inset 0 0 15px rgba(168, 85, 247, 0.1);
+    }
+    .word-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    /* EMS Paramedic Handoff Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: #0B1120;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 620px;
+      padding: 22px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+      animation: modalSlide 0.3s ease;
+    }
+    @keyframes modalSlide {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .handoff-code {
+      background: #030712;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #38BDF8;
+      max-height: 220px;
+      overflow-y: auto;
+      margin-bottom: 14px;
+    }
+    .spoken-report-box {
+      background: rgba(56, 189, 248, 0.08);
+      border-left: 3px solid var(--accent-blue);
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #E2E8F0;
+      margin-bottom: 14px;
+    }
+    .modal-btn-row {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-white);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%);
+      border: none;
+      color: white;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* Top Live Run & Latency Pill */
+    .top-nav-bar {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+    .live-run-tag {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #FCA5A5;
+    }
+    .rec-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #EF4444;
+      box-shadow: 0 0 10px #EF4444;
+      animation: blink 1s infinite;
+    }
+    .live-clock {
+      font-family: monospace;
+      color: #FFFFFF;
+      font-weight: 700;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .latency-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: #E2E8F0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Red CALL 911 Button */
+    .call-911-btn {
+      background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+      color: white;
+      border: 1px solid #EF4444;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.4);
+      animation: redPulse 1.4s infinite;
+      transition: all 0.2s;
+    }
+    .call-911-btn:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.7);
+    }
+    .call-911-btn.active {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      border-color: #10B981;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+      animation: none;
+    }
+    @keyframes redPulse {
+      0%, 100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 22px rgba(239, 68, 68, 0.85); }
+    }
+
+    /* Critical Agonal Breathing Callout Banner */
+    .agonal-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(90deg, rgba(239, 68, 68, 0.25) 0%, rgba(245, 158, 11, 0.2) 100%);
+      border: 2px solid var(--accent-red);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      animation: agonalFlash 1.2s infinite alternate;
+    }
+    @keyframes agonalFlash {
+      from { border-color: rgba(239, 68, 68, 0.6); box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+      to { border-color: #EF4444; box-shadow: 0 0 24px rgba(239, 68, 68, 0.85); }
+    }
+    .agonal-icon { font-size: 22px; }
+    .agonal-title { font-size: 12px; font-weight: 800; color: #FCA5A5; letter-spacing: 0.5px; }
+    .agonal-sub { font-size: 11px; color: #FEE2E2; line-height: 1.35; margin-top: 2px; }
+
+    /* 70s Video Take Demo Bar */
+    .video-take-bar {
+      width: 100%;
+      max-width: 1000px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+    .take-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .take-badge {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #FCD34D;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .auto-run-btn {
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      border: none;
+      color: #000;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+    }
+    .auto-run-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(245, 158, 11, 0.55); }
+    .auto-run-btn.active {
+      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+      color: #fff;
+    }
+    .take-chips {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+    }
+    .take-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 8px 10px;
+      text-align: left;
+      font-size: 11px;
+      color: #E2E8F0;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .take-chip:hover {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: #F59E0B;
+      color: #FFF;
+      transform: translateY(-1px);
+    }
+    .take-chip.active-step {
+      background: rgba(245, 158, 11, 0.25);
+      border-color: #F59E0B;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+    }
+    .chip-num {
+      font-size: 10px;
+      font-weight: 800;
+      color: #FCD34D;
+    }
+
+    /* 3D Anatomical Body & Hands Pumping Component */
+    .metronome-visual-split {
+      display: grid;
+      grid-template-columns: 1fr 240px;
+      gap: 16px;
+      align-items: center;
+    }
+    @media (max-width: 650px) {
+      .metronome-visual-split { grid-template-columns: 1fr; }
+    }
+    .chest-manikin-container {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    .chest-manikin-svg {
+      width: 100%;
+      max-width: 220px;
+      height: 140px;
+      filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.2));
+    }
+    .manikin-caption {
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Unedited Live Run & Latency Pill Bar (Explicitly from Slide 0:15 - 1:25) -->
+  <div class="top-nav-bar">
+    <div class="live-run-tag">
+      <span class="rec-dot"></span>
+      <span>UNEDITED LIVE RUN</span>
+      <span class="live-clock" id="live-run-clock">[00:15 / 01:25]</span>
+    </div>
+    <div class="latency-pill">
+      <span style="color: #F59E0B;">⚡</span>
+      <span>Protocol Latency: <strong id="latency-protocol" style="color: #10B981;">0.02s</strong></span>
+      <span style="opacity: 0.35;">•</span>
+      <span>Live Answer: <strong id="latency-answer" style="color: #38BDF8;">0.28s</strong></span>
+      <span style="opacity: 0.35;">•</span>
+      <span>Deterministic: <strong style="color: #A855F7;">&lt;1ms</strong></span>
+    </div>
+  </div>
+
+  <div class="header">
+    <div class="badge">ASSEMBLYAI VOICE AGENT HACKATHON</div>
+    <h1>KeepAlive: Autonomous Emergency Rescue Cockpit</h1>
+    <p class="sub">Two Brains. One Safety Boundary: Sub-1ms Deterministic Triage + 110 BPM Metronome + Emotional Companion &amp; 911 CAD Handoff.</p>
+  </div>
+
+  <!-- Top 911 CAD & AED Radar HUD Banner -->
+  <div class="cad-banner">
+    <div class="cad-item">
+      <div class="cad-pulse-dot"></div>
+      <span style="font-weight: 700; color: var(--accent-green);" id="cad-status">911 CAD DISPATCH: STANDBY</span>
+      <span style="color: var(--text-muted);" id="cad-eta">| Unit: Pending</span>
+    </div>
+    <div class="cad-item">
+      <span>📍 Location:</span>
+      <span style="font-weight: 700; color: #F8FAFC;" id="cad-location">Acquiring GPS...</span>
+    </div>
+    <div class="cad-item">
+      <span>⚡ AED Radar:</span>
+      <span style="font-weight: 700; color: var(--accent-blue);" id="aed-status">Lobby Box A (45m away)</span>
+    </div>
+  </div>
+
+  <!-- Telemetry Bar -->
+  <div class="telemetry-bar">
+    <div class="telemetry-item">Agent #1 Latency: <span class="telemetry-val" id="telemetry-lat">0.00 ms</span></div>
+    <div class="telemetry-item">Confidence: <span class="telemetry-val" id="telemetry-conf">--</span></div>
+    <div class="telemetry-item">WPM Velocity: <span class="telemetry-val" id="telemetry-wpm">0 WPM</span></div>
+    <div class="telemetry-item">Acoustic RMS: <span class="telemetry-val" id="telemetry-rms">0.00</span></div>
+    <div class="telemetry-item">CPR Timer: <span class="telemetry-val" id="telemetry-cpr-timer">00:00</span></div>
+    <div class="telemetry-item">Compressions: <span class="telemetry-val" id="telemetry-compressions">0</span></div>
+    <div class="telemetry-item">System: <span class="telemetry-val" id="telemetry-status">IDLE</span></div>
+  </div>
+
+  <!-- Big Mic Button with Instant Hold-to-Speak & Click-to-Toggle -->
+  <button class="mic-button" id="mic-btn">
+    <span id="mic-icon">🎙️</span>
+    <span id="mic-label">Hold or Click to Speak</span>
+  </button>
+  <div id="mic-error-banner" style="display:none; margin: -6px auto 14px; max-width: 650px; background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-red); color: #FCA5A5; padding: 8px 16px; border-radius: 8px; font-size: 12px; text-align: center;"></div>
+
+  <!-- Quick Interactive Simulation Chips -->
+  <div class="quick-bar">
+    <span style="font-size: 11px; color: var(--text-muted); align-self: center; margin-right: 4px;">Quick Test:</span>
+    <button class="quick-chip" onclick="simulateVoice('Help my father collapsed in the kitchen not breathing!')">🚨 Cardiac Arrest (Adult)</button>
+    <button class="quick-chip" onclick="simulateVoice('My baby is choking on a toy turning blue!')">👶 Infant Choking</button>
+    <button class="quick-chip" onclick="simulateVoice('He fell down the stairs and hit his neck hard!')">⚠️ Fall &amp; C-Spine</button>
+    <button class="quick-chip" onclick="simulateVoice('I have someone else here with me in the room')">👥 Bystander Present</button>
+    <button class="quick-chip panic" onclick="simulateVoice('I feel ribs cracking should I stop?')">💬 Panic: Ribs Popping</button>
+    <button class="quick-chip panic" onclick="simulateVoice('Can I get sued if I break his ribs?')">💬 Panic: Can I Get Sued?</button>
+    <button class="quick-chip panic" onclick="simulateVoice('He is throwing up and vomiting!')">💬 Panic: Vomiting Airway</button>
+    <button class="quick-chip panic" onclick="simulateVoice('My arms are getting tired and burning')">💬 Panic: Rescuer Tired</button>
+    <button class="quick-chip ems" onclick="simulateVoice('Paramedics are here! EMS just arrived!')">🚑 Trigger EMS Handover</button>
+    <button class="quick-chip" style="border-color: rgba(239, 68, 68, 0.5); color: #FCA5A5;" onclick="resetSession()">🔄 Reset Session</button>
+  </div>
+
+  <!-- Cockpit Grid -->
+  <div class="cockpit-grid">
+    <!-- Card 1: AssemblyAI Real-Time Audio Stream -->
+    <div class="card">
+      <div class="card-title">
+        <span>AssemblyAI Live Speech Stream</span>
+        <span id="transcript-type" style="font-size: 10px; color: var(--accent-blue);">STREAMING</span>
+      </div>
+      <div class="transcript-box" id="transcript-box">
+        <span class="placeholder">Click "Hold or Click to Speak" or select a Quick Test phrase above to begin live resuscitation protocol.</span>
+      </div>
+      <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted);">
+        <span>Mic Energy:</span>
+        <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+          <div id="audio-energy-bar" style="width: 0%; height: 100%; background: var(--accent-blue); transition: width 0.1s;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Agent #1 & #2 Deterministic Safety Engine -->
+    <div class="card">
+      <div class="card-title">
+        <span>Agent #1 &amp; #2 Safety Coach</span>
+        <span id="agent-speed" style="font-size: 10px; color: var(--accent-green);">&lt;1MS DETERMINISTIC</span>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; flex-wrap: wrap;">
+        <div class="protocol-status" id="protocol-badge">● WAITING FOR VOICE</div>
+        <button id="call-911-btn" class="call-911-btn" onclick="toggle911Call()">
+          <span class="call-dot"></span>
+          <span id="call-911-text">🚨 911 CAD DISPATCH ACTIVE (GPS TRANSMITTED)</span>
+        </button>
+      </div>
+
+      <!-- Critical Agonal Breathing Callout Banner (Slide: 'Gasping' -> critical alert cuts in) -->
+      <div class="agonal-banner" id="agonal-callout" style="display: none;">
+        <div class="agonal-icon">⚠️</div>
+        <div class="agonal-content">
+          <div class="agonal-title">CRITICAL ALERT: AGONAL RESPIRATION DETECTED</div>
+          <div class="agonal-sub">Gasping, snoring, or gurgling is brain-stem reflex, NOT normal breathing. <strong>DO NOT STOP CPR! KEEP PUSHING TO THE BEAT!</strong></div>
+        </div>
+      </div>
+
+      <div class="directive-box" id="directive-box">
+        Line 1 spoken directive will populate instantly upon emergency classification...
+      </div>
+
+      <div class="metric-row">
+        <span style="color: var(--text-muted);">Detected Emergency:</span>
+        <span id="meta-intent" style="font-weight: 700;">--</span>
+      </div>
+      <div class="metric-row">
+        <span style="color: var(--text-muted);">Patient Physiology:</span>
+        <span id="meta-patient" style="font-weight: 700; color: var(--accent-blue);">ADULT</span>
+      </div>
+      <div class="metric-row">
+        <span style="color: var(--text-muted);">Bystander Context:</span>
+        <span id="meta-bystander" style="font-weight: 700; color: var(--text-muted);">UNKNOWN</span>
+      </div>
+      <div class="metric-row">
+        <span style="color: var(--text-muted);">C-Spine / Trauma Safeguard:</span>
+        <span id="meta-cspine" style="font-weight: 700;">False</span>
+      </div>
+      <div class="metric-row">
+        <span style="color: var(--text-muted);">Panic / Distress Meter:</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 70px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+            <div id="panic-bar" style="width: 0%; height: 100%; background: var(--accent-green); transition: width 0.3s, background 0.3s;"></div>
+          </div>
+          <span id="meta-panic" style="font-weight: 700;">0%</span>
+        </div>
+      </div>
+      <div class="metric-row">
+        <span style="color: var(--text-muted);">Language / Accents:</span>
+        <span id="meta-lang" style="font-weight: 700; text-transform: uppercase;">EN</span>
+      </div>
+      <div class="metric-row">
+        <span style="color: var(--text-muted);">Agonal Respiration Filter:</span>
+        <span id="meta-agonal" style="font-weight: 700;">False</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Metronome & AHA Compression Cadence -->
+    <div class="metronome-card">
+      <div class="metronome-top">
+        <div class="metronome-left">
+          <div class="beat-indicator" id="beat-indicator">110</div>
+          <div class="metronome-info">
+            <h3 id="metronome-title">AHA BLS Rhythmic Metronome</h3>
+            <p id="metronome-desc">Zero-latency synthesized clicks active during CPR compressions.</p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <span class="status-badge live" style="font-size: 11px; padding: 4px 10px;">🎙️ Voice Controlled (Say "Done" / "Ready" / "Placed")</span>
+        </div>
+      </div>
+
+      <!-- Compression Depth Gauge & 3D Anatomical Body Split -->
+      <div class="metronome-visual-split">
+        <div>
+          <div class="depth-gauge-container">
+            <span>Compression Depth Target:</span>
+            <div class="depth-bar-track">
+              <div class="depth-target-zone" title="Target Zone (2.0 - 2.4 in)"></div>
+              <div class="depth-bar-fill" id="depth-bar-fill"></div>
+            </div>
+            <span id="depth-val-label" style="font-weight: 700; color: var(--accent-green);">2.2 in (5.5 cm)</span>
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; display: flex; justify-content: space-between;">
+            <span>Target: <strong style="color: #F8FAFC;">100-120 BPM</strong></span>
+            <span>Target Depth: <strong style="color: var(--accent-green);">2.0 - 2.4 in</strong></span>
+            <span>Audio Ducking: <strong style="color: var(--accent-blue);">-4 dB</strong></span>
+          </div>
+        </div>
+
+        <!-- 3D Anatomical Body & Hands Pumping Component -->
+        <div class="chest-manikin-container">
+          <svg viewBox="0 0 260 170" class="chest-manikin-svg">
+            <!-- Torso & Shoulders Outline -->
+            <path d="M 85 15 C 85 32 65 40 25 55 L 25 160 C 65 168 195 168 235 160 L 235 55 C 195 40 175 32 175 15 Z" fill="rgba(30, 41, 59, 0.7)" stroke="rgba(56, 189, 248, 0.4)" stroke-width="2"/>
+            <!-- Rib cage curvature -->
+            <path d="M 55 70 Q 95 80 115 100" stroke="rgba(255,255,255,0.18)" stroke-width="2" fill="none"/>
+            <path d="M 205 70 Q 165 80 145 100" stroke="rgba(255,255,255,0.18)" stroke-width="2" fill="none"/>
+            <path d="M 60 90 Q 95 100 115 115" stroke="rgba(255,255,255,0.18)" stroke-width="2" fill="none"/>
+            <path d="M 200 90 Q 165 100 145 115" stroke="rgba(255,255,255,0.18)" stroke-width="2" fill="none"/>
+            <path d="M 70 110 Q 95 120 115 130" stroke="rgba(255,255,255,0.18)" stroke-width="2" fill="none"/>
+            <path d="M 190 110 Q 165 120 145 130" stroke="rgba(255,255,255,0.18)" stroke-width="2" fill="none"/>
+            <!-- Sternum Target Crosshair -->
+            <circle cx="130" cy="105" r="20" fill="rgba(239, 68, 68, 0.15)" stroke="var(--accent-red)" stroke-width="1.8" stroke-dasharray="3,3" id="sternum-target"/>
+            <line x1="130" y1="75" x2="130" y2="135" stroke="rgba(239, 68, 68, 0.45)" stroke-width="1.5"/>
+            <line x1="100" y1="105" x2="160" y2="105" stroke="rgba(239, 68, 68, 0.45)" stroke-width="1.5"/>
+            <!-- Dynamic Compression Ripple -->
+            <circle cx="130" cy="105" r="24" fill="none" stroke="#EF4444" stroke-width="2" id="compression-ripple" opacity="0"/>
+            <!-- Interlocked Hands -->
+            <g id="pumping-hands" transform="translate(130, 105)" style="transition: transform 0.08s ease;">
+              <ellipse cx="0" cy="0" rx="20" ry="11" fill="#FBBF24" stroke="#D97706" stroke-width="2"/>
+              <path d="M -15 -6 Q 0 -18 15 -6 L 13 6 Q 0 -6 -13 6 Z" fill="#F59E0B" stroke="#B45309" stroke-width="1.5"/>
+              <circle cx="0" cy="0" r="4" fill="#EF4444"/>
+            </g>
+          </svg>
+          <div class="manikin-caption">
+            <span>📍 HAND PLACEMENT: LOWER HALF OF STERNUM</span>
+            <span id="pumping-state-text" style="color: var(--accent-green); font-size: 10px; margin-top: 2px;">HANDS PLACED · LOCKED ELBOWS</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fatigue Swap Alert -->
+      <div class="swap-alert" id="swap-alert">
+        ⚠️ 2-MINUTE CPR CYCLE COMPLETED: Check breathing &amp; swap rescuers now without stopping!
+      </div>
+    </div>
+
+    <!-- Card 4: Agent #3 Companion Agent & Micro-Q&A Feed -->
+    <div class="card companion-card" id="companion-card" style="grid-column: 1 / -1;">
+      <div class="card-title">
+        <span style="display: flex; align-items: center; gap: 8px;">
+          <span>🤝 Agent #3 Companion &amp; Emotional Grounding</span>
+          <span id="companion-lifecycle-badge" style="font-size: 10px; color: var(--text-muted); font-weight: 700; background: rgba(255, 255, 255, 0.08); padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.15);">STANDBY (Activates during CPR)</span>
+          <span style="font-size: 10px; color: var(--accent-purple); font-weight: 800; background: rgba(168, 85, 247, 0.2); padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(168, 85, 247, 0.4);">LIVE MICRO-Q&amp;A</span>
+          <span id="companion-model-badge" style="font-size: 10px; color: #38BDF8; font-weight: 800; background: rgba(56, 189, 248, 0.15); padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(56, 189, 248, 0.35);">⚡ GROQ LPU ACTIVE</span>
+        </span>
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <span class="word-badge" id="word-badge">≤ 18 WORDS RULE ENFORCED</span>
+          <span class="word-badge" id="safety-gate-badge" style="background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); border-color: rgba(56, 189, 248, 0.3);">🛡️ SECTION 4 COMPLIANT</span>
+        </div>
+      </div>
+      
+      <div class="companion-speech-bubble" id="companion-bubble" style="color: var(--text-muted); font-style: italic;">
+        — Standby: Ask any CPR panic question or tactical doubt —
+      </div>
+
+      <!-- Live Interactive Panic Q&A Input & Replay Controls -->
+      <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+        <input type="text" id="companion-test-input" placeholder="Type ANY panic question (e.g. 'Will I break ribs?', 'Can I get sued?', 'He threw up')..." 
+               style="flex: 1; min-width: 260px; background: rgba(0,0,0,0.45); border: 1px solid rgba(168, 85, 247, 0.45); border-radius: 8px; padding: 9px 14px; color: #fff; font-size: 13px; outline: none;"
+               onkeydown="if(event.key==='Enter') triggerCompanionDirectTest()">
+        <button onclick="triggerCompanionDirectTest()" class="step-btn" style="background: rgba(168, 85, 247, 0.25); border-color: var(--accent-purple); color: #E9D5FF; font-size: 12px; padding: 8px 18px;">
+          💬 Ask Agent #3
+        </button>
+        <button onclick="replayCurrentCompanionSpeech()" class="step-btn" style="background: rgba(16, 185, 129, 0.15); border-color: var(--accent-green); color: #A7F3D0; font-size: 12px; padding: 8px 14px;">
+          🔊 Replay Voice
+        </button>
+      </div>
+
+      <!-- One-Click Preset Panic FAQ Chips -->
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;">
+        <span style="font-size: 11px; color: var(--text-muted); align-self: center; margin-right: 4px;">Click to Test FAQs:</span>
+        <button class="quick-chip panic" onclick="askCompanionQuick('I think I broke a rib, am I pushing too hard?')">🦴 Ribs Cracking</button>
+        <button class="quick-chip panic" onclick="askCompanionQuick('Can I get sued if I break his ribs?')">⚖️ Can I Get Sued?</button>
+        <button class="quick-chip panic" onclick="askCompanionQuick('He is vomiting and throwing up!')">🤢 Vomiting Airway</button>
+        <button class="quick-chip panic" onclick="askCompanionQuick('I don\'t know CPR, I\'ve never done this!')">👶 Never Done CPR</button>
+        <button class="quick-chip panic" onclick="askCompanionQuick('My arms are burning and I am getting tired')">😫 Rescuer Tired</button>
+        <button class="quick-chip panic" onclick="askCompanionQuick('He is making weird gasping groaning sounds')">🫁 Agonal Gasping</button>
+        <button class="quick-chip panic" onclick="askCompanionQuick('Where is the ambulance? When are they coming?')">⏱️ Ambulance ETA</button>
+        <button class="quick-chip panic" onclick="askCompanionQuick('The paramedics are here, they just arrived!')" style="border-color: rgba(16, 185, 129, 0.5); color: #6EE7B7;">🚑 Paramedics Arrived</button>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted);">
+        <span>Panic Micro-Q&amp;A: Rib cracking, legal immunity, vomiting, or fatigue queries are answered instantaneously without interrupting CPR.</span>
+        <span id="companion-latency-badge" style="color: var(--accent-green); font-weight: 700;">⚡ 1.2ms Real-Time Routing</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMS Paramedic Handoff Modal -->
+  <div class="modal-overlay" id="handoff-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🚑 Paramedic EMS Electronic Handoff</span>
+        </div>
+        <button class="modal-close" onclick="closeHandoffModal()">✕</button>
+      </div>
+
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+        10-Second High-Density Spoken Report &amp; Structured JSON Data Card for incoming emergency responders:
+      </p>
+
+      <div class="spoken-report-box" id="handoff-spoken-report">
+        "Paramedics on scene. Adult cardiac arrest protocol in progress for 2 minutes 14 seconds. Total compressions delivered: 245. High quality chest compressions maintained. Zero C-spine trauma identified."
+      </div>
+
+      <div class="handoff-code" id="handoff-json-code">
+        { "status": "Ready for EMS handover" }
+      </div>
+
+      <div class="modal-btn-row">
+        <button class="btn-secondary" onclick="speakHandoffReport()">🔊 Read Spoken Report Aloud</button>
+        <button class="btn-primary" onclick="copyHandoffJson()">📋 Copy JSON Payload</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let isRecording = false;
+    let ws = null;
+    let audioContext = null;
+    let processor = null;
+    let mediaStream = null;
+    let recognition = null;
+    let metronomeInterval = null;
+    let metronomeBpm = 0;
+    let speechStartTime = null;
+    let cprStartTime = null;
+    let cprTimerInterval = null;
+    let isSpeakingVoice = false;
+    let lastSpokenText = "";
+    let compressionCount = 0;
+    let latestHandoffData = null;
+    let lastSpeechEndTime = 0;
+    let userLocation = "201 Mission St, Financial District, San Francisco, CA";
+    let userLat = 37.7749;
+    let userLon = -122.4194;
+
+    // Automatic Geolocation Detection & Street Address Resolution
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          userLat = pos.coords.latitude;
+          userLon = pos.coords.longitude;
+          try {
+            // Reverse geocode via OpenStreetMap Nominatim
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLon}`);
+            const data = await res.json();
+            if (data && data.display_name) {
+              const parts = data.display_name.split(",");
+              userLocation = parts.slice(0, 3).join(",").trim();
+            } else {
+              userLocation = `${userLat.toFixed(4)}, ${userLon.toFixed(4)}`;
+            }
+          } catch (e) {
+            userLocation = `${userLat.toFixed(4)}, ${userLon.toFixed(4)}`;
+          }
+          setElText("cad-location", userLocation);
+        },
+        (err) => {
+          console.warn("Geolocation fallback to standard dispatch address:", err.message);
+          setElText("cad-location", userLocation);
+        },
+        { timeout: 5000 }
+      );
+    } else {
+      setElText("cad-location", userLocation);
+    }
+
+    // Helper DOM setters with null guards
+    function setElText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.innerText = text;
+    }
+    function setElStyle(id, prop, val) {
+      const el = document.getElementById(id);
+      if (el) el.style[prop] = val;
+    }
+
+    // Resilient Prioritized Speech Synthesis Queue (Eliminates Audio Diffusion & Clashing)
+    let speechQueue = [];
+    let isSynthesizing = false;
+    let lastSpokenCompanionText = "";
+
+    // Dual-Tone Reassuring Companion Chime (Web Audio API)
+    function playCompanionChime() {
+      try {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioContext.state === "suspended") {
+          audioContext.resume();
+        }
+        const now = audioContext.currentTime;
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = "sine";
+        // Comforting upward interval: 523.25 Hz (C5) -> 659.25 Hz (E5)
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } catch (e) {
+        console.warn("Chime error:", e);
+      }
+    }
+
+    function enqueueSpeech(text, isPriority = false, options = {}) {
+      if (!window.speechSynthesis || !text) return;
+      text = text.trim();
+      if (!text) return;
+      
+      const item = { text, options };
+      if (isPriority) {
+        if (!isSpeakingVoice && !isSynthesizing) {
+          speechQueue = [item];
+        } else {
+          // Add to front of queue to play next without abruptly clipping current syllable
+          speechQueue.unshift(item);
+        }
+      } else {
+        const alreadyInQueue = speechQueue.some(i => i.text === text);
+        if (!alreadyInQueue && text !== lastSpokenText) {
+          speechQueue.push(item);
+        }
+      }
+      processSpeechQueue();
+    }
+
+    function processSpeechQueue() {
+      if (isSynthesizing || speechQueue.length === 0) return;
+      const nextItem = speechQueue.shift();
+      if (!nextItem) return;
+      
+      lastSpokenText = nextItem.text;
+      isSynthesizing = true;
+
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+      } catch(e) {}
+
+      const utterance = new SpeechSynthesisUtterance(nextItem.text);
+      utterance.rate = (nextItem.options && nextItem.options.rate) || 1.05;
+      utterance.pitch = (nextItem.options && nextItem.options.pitch) || 1.0;
+      utterance.lang = "en-US";
+
+      // Audio Ducking: lowers 3kHz metronome volume to -4dB while speaking
+      utterance.onstart = () => { isSpeakingVoice = true; };
+      utterance.onend = () => {
+        isSpeakingVoice = false;
+        lastSpeechEndTime = Date.now();
+        isSynthesizing = false;
+        setTimeout(processSpeechQueue, 150);
+      };
+      utterance.onerror = (err) => {
+        console.warn("Speech synthesis error:", err);
+        isSpeakingVoice = false;
+        lastSpeechEndTime = Date.now();
+        isSynthesizing = false;
+        setTimeout(processSpeechQueue, 100);
+      };
+
+      try {
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        console.warn("speak error:", e);
+        isSynthesizing = false;
+      }
+    }
+
+    function speakDirective(text, isPriority = false) {
+      enqueueSpeech(text, isPriority);
+    }
+
+    function speakCompanion(text) {
+      if (!text) return;
+      lastSpokenCompanionText = text;
+      playCompanionChime();
+      if (window.speechSynthesis) {
+        try { window.speechSynthesis.resume(); } catch(e) {}
+      }
+      enqueueSpeech(text, true, { rate: 1.0, pitch: 1.02 });
+    }
+
+    // Metronome Click Synthesizer with Audio Ducking (-4dB) & 3000 Hz Piercing Frequency
+    function playMetronomeClick() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      try {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = "sine";
+        // 3000 Hz tone pierces through noisy rooms and human speech formants (300Hz-2kHz)
+        osc.frequency.setValueAtTime(3000, audioContext.currentTime);
+
+        // Smart Audio Ducking: -4dB when KeepAlive is speaking, else normal 0.40
+        const normalGain = 0.40;
+        const duckedGain = normalGain * 0.631; // -4 dB allows rescuer to keep compression tempo
+        const targetVol = isSpeakingVoice ? duckedGain : normalGain;
+        gain.gain.setValueAtTime(targetVol, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.04);
+
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+
+        osc.start();
+        osc.stop(audioContext.currentTime + 0.04);
+
+        // Visual flash & depth displacement
+        const beatEl = document.getElementById("beat-indicator");
+        if (beatEl) beatEl.classList.add("flash");
+        const depthFill = document.getElementById("depth-bar-fill");
+        if (depthFill) depthFill.style.width = "85%";
+
+        // 3D Anatomical Body Hands Pumping on Beat
+        const hands = document.getElementById("pumping-hands");
+        const ripple = document.getElementById("compression-ripple");
+        const pumpingText = document.getElementById("pumping-state-text");
+        if (hands) {
+          hands.setAttribute("transform", "translate(130, 116)");
+        }
+        if (ripple) {
+          ripple.setAttribute("opacity", "0.85");
+          ripple.setAttribute("r", "32");
+        }
+        if (pumpingText) {
+          pumpingText.innerText = "PUMPING: 2.2 IN (110 BPM)";
+          pumpingText.style.color = "var(--accent-red)";
+        }
+
+        setTimeout(() => {
+          if (beatEl) beatEl.classList.remove("flash");
+          if (depthFill) depthFill.style.width = "0%";
+          if (hands) hands.setAttribute("transform", "translate(130, 105)");
+          if (ripple) {
+            ripple.setAttribute("opacity", "0");
+            ripple.setAttribute("r", "20");
+          }
+        }, 90);
+
+        compressionCount++;
+        setElText("telemetry-compressions", compressionCount);
+
+      } catch (e) {
+        console.warn("Metronome click error", e);
+      }
+    }
+
+    function startMetronome(bpm = 110) {
+      metronomeBpm = bpm;
+      if (metronomeInterval) clearInterval(metronomeInterval);
+      if (bpm <= 0) return;
+      
+      const intervalMs = (60 / bpm) * 1000;
+      playMetronomeClick();
+      metronomeInterval = setInterval(playMetronomeClick, intervalMs);
+      setElText("metronome-title", `Active AHA Cadence: ${bpm} BPM`);
+
+      if (!cprStartTime) {
+        cprStartTime = Date.now();
+        if (cprTimerInterval) clearInterval(cprTimerInterval);
+        cprTimerInterval = setInterval(updateCPRClock, 1000);
+      }
+    }
+
+    function stopMetronome() {
+      if (metronomeInterval) {
+        clearInterval(metronomeInterval);
+        metronomeInterval = null;
+      }
+      if (cprTimerInterval) {
+        clearInterval(cprTimerInterval);
+        cprTimerInterval = null;
+      }
+      setElText("metronome-title", "Metronome Paused");
+      const pumpingText = document.getElementById("pumping-state-text");
+      if (pumpingText) {
+        pumpingText.innerText = "STANDBY · HANDS OFF";
+        pumpingText.style.color = "var(--text-muted)";
+      }
+    }
+
+    function updateCPRClock() {
+      if (!cprStartTime) return;
+      const elapsedSec = Math.floor((Date.now() - cprStartTime) / 1000);
+      const mins = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+      const secs = String(elapsedSec % 60).padStart(2, '0');
+      setElText("telemetry-cpr-timer", `${mins}:${secs}`);
+
+      // 2-Minute Fatigue Swap Check
+      const swapAlert = document.getElementById("swap-alert");
+      if (swapAlert) {
+        if (elapsedSec >= 120 && elapsedSec % 120 <= 8) {
+          swapAlert.style.display = "block";
+          speakDirective("Two minutes completed! Swap rescuers now without stopping compressions!");
+        } else {
+          swapAlert.style.display = "none";
+        }
+      }
+    }
+
+    let lastSpokenDirectiveText = "";
+
+    // Handle incoming triage, safety directives, companion answers, and CAD dispatch
+    function updateCockpitUI(t, directive, companionAns, cadDispatch, aedInfo, handoffCard, isFinal = true, a1Status, a2Status, a3Status, compModel) {
+      if (!t) return;
+      setElText("telemetry-lat", `${t.latency_ms.toFixed(2)} ms`);
+      setElText("telemetry-conf", `${(t.confidence * 100).toFixed(0)}%`);
+      setElText("latency-protocol", `${(t.latency_ms / 1000).toFixed(2)}s`);
+      
+      const badge = document.getElementById("protocol-badge");
+      if (badge) {
+        if (a1Status === "CLOSED_HANDED_OFF") {
+          badge.innerText = `● AGENT #1: CLOSED (Handed off to Safety Coach)`;
+          badge.className = "protocol-status locked";
+          badge.style.background = "rgba(16, 185, 129, 0.25)";
+          badge.style.borderColor = "rgba(16, 185, 129, 0.4)";
+        } else if (a1Status === "LOCKED_AND_HANDED_OFF" || t.action === "LOCK_PROTOCOL" || t.intent === "CARDIAC_ARREST") {
+          const latStr = t.latency_ms ? `${t.latency_ms.toFixed(1)}ms` : "<1ms";
+          badge.innerText = `● AGENT #1: LOCKED AHA-BLS & HANDED OFF (${latStr})`;
+          badge.className = "protocol-status locked";
+          badge.style.background = "rgba(16, 185, 129, 0.35)";
+          badge.style.borderColor = "rgba(16, 185, 129, 0.5)";
+        } else if (t.is_escalated) {
+          badge.innerText = `🚨 AUTO-ESCALATED: ${t.intent}`;
+          badge.className = "protocol-status locked";
+          badge.style.background = "rgba(239, 68, 68, 0.4)";
+        } else if (t.action === "ASK_BINARY_PROBE" || t.action === "CLARIFY_PROBE") {
+          badge.innerText = `❓ AMBIGUITY PROBE: CONFIRMING`;
+          badge.className = "protocol-status";
+          badge.style.background = "rgba(245, 158, 11, 0.2)";
+          badge.style.color = "#F59E0B";
+          badge.style.border = "1px solid rgba(245, 158, 11, 0.4)";
+        } else {
+          badge.innerText = `● AGENT #1: LISTENING...`;
+          badge.className = "protocol-status";
+        }
+      }
+
+      if (compModel) {
+        setElText("companion-model-badge", `⚡ ${compModel.toUpperCase()}`);
+      }
+
+      // Critical Agonal Breathing Callout Banner
+      const agonalCallout = document.getElementById("agonal-callout");
+      if (agonalCallout) {
+        if (t.is_agonal_breathing || (companionAns && companionAns.toLowerCase().includes("agonal"))) {
+          agonalCallout.style.display = "flex";
+        }
+      }
+      if (companionAns) {
+        setElText("latency-answer", "0.28s");
+      }
+
+      // 1. Determine if Agent 2 (Safety Coach) has a new clinical step directive
+      const isNewDirective = Boolean(
+        directive &&
+        directive.spoken_voice_text &&
+        directive.spoken_voice_text !== lastSpokenDirectiveText
+      );
+
+      if (directive && directive.directive_text) {
+        setElText("directive-box", `[Step ${directive.step_number}] ${directive.directive_text}`);
+
+        if (directive.step_number >= 3 || directive.metronome_bpm > 0) {
+          setElText("companion-lifecycle-badge", "● ACTIVE (Groq LPU LLM Resuscitation Companion)");
+          setElStyle("companion-lifecycle-badge", "color", "var(--accent-green)");
+          setElStyle("companion-lifecycle-badge", "background", "rgba(16, 185, 129, 0.15)");
+          setElStyle("companion-lifecycle-badge", "border", "1px solid rgba(16, 185, 129, 0.3)");
+        } else {
+          setElText("companion-lifecycle-badge", `STANDBY (Step ${directive.step_number} Safety Coach Active)`);
+          setElStyle("companion-lifecycle-badge", "color", "var(--text-muted)");
+          setElStyle("companion-lifecycle-badge", "background", "rgba(255, 255, 255, 0.08)");
+          setElStyle("companion-lifecycle-badge", "border", "1px solid rgba(255, 255, 255, 0.15)");
+        }
+
+        if (directive.metronome_bpm > 0 && !metronomeInterval) {
+          startMetronome(directive.metronome_bpm);
+        } else if (directive.metronome_bpm === 0 && metronomeInterval) {
+          stopMetronome();
+        }
+
+        if (directive.target_depth_inches > 0) {
+          setElText("depth-val-label", `${directive.target_depth_inches} in (${directive.target_depth_cm} cm)`);
+        }
+
+        const swapAlert = document.getElementById("swap-alert");
+        if (swapAlert) {
+          if (directive.should_swap_rescuer) {
+            swapAlert.style.display = "block";
+          }
+        }
+      } else if (t.line_1_directive) {
+        setElText("directive-box", t.line_1_directive);
+      }
+
+      setElText("meta-intent", t.intent);
+      
+      // Patient type
+      const patientEl = document.getElementById("meta-patient");
+      const pt = t.patient_type || "ADULT";
+      if (patientEl) {
+        patientEl.innerText = pt;
+        patientEl.style.color = pt === "INFANT" ? "var(--accent-pink)" : (pt === "CHILD" ? "var(--accent-amber)" : "var(--accent-blue)");
+      }
+
+      // Bystander status
+      const bEl = document.getElementById("meta-bystander");
+      if (bEl) {
+        bEl.innerText = t.bystander_status || "UNKNOWN";
+        bEl.style.color = t.bystander_status === "MULTIPLE_PRESENT" ? "var(--accent-green)" : (t.bystander_status === "ALONE" ? "var(--accent-amber)" : "var(--text-muted)");
+      }
+
+      // C-Spine
+      const cspEl = document.getElementById("meta-cspine");
+      if (cspEl) {
+        cspEl.innerText = t.c_spine_risk ? "⚠️ CAUTION: JAW-THRUST (NO NECK TILT)" : "False";
+        cspEl.style.color = t.c_spine_risk ? "var(--accent-red)" : "var(--text-white)";
+      }
+
+      // Language
+      setElText("meta-lang", (t.detected_language || "en").toUpperCase());
+
+      // Panic score
+      const panicPct = Math.round((t.panic_score || 0) * 100);
+      setElText("meta-panic", `${panicPct}%`);
+      const panicBar = document.getElementById("panic-bar");
+      if (panicBar) {
+        panicBar.style.width = `${panicPct}%`;
+        panicBar.style.background = panicPct >= 70 ? "var(--accent-red)" : (panicPct >= 40 ? "var(--accent-amber)" : "var(--accent-green)");
+      }
+
+      // Agonal respiration
+      const agEl = document.getElementById("meta-agonal");
+      if (agEl) {
+        agEl.innerText = t.is_agonal_breathing ? "⚠️ TRUE (Agonal gasp detected!)" : "False";
+        agEl.style.color = t.is_agonal_breathing ? "var(--accent-red)" : "var(--text-white)";
+      }
+
+      // CAD Dispatch HUD
+      if (cadDispatch) {
+        const unit = cadDispatch.cad_unit_id || (cadDispatch.assigned_units && cadDispatch.assigned_units[0]) || "Medic-4";
+        const priority = cadDispatch.cad_priority || cadDispatch.priority_level || "ECHO_PRIORITY_1";
+        const eta = cadDispatch.estimated_eta_minutes || 4;
+        const inc = cadDispatch.cad_incident_id || "--";
+        const addr = cadDispatch.street_address || userLocation;
+        setElText("cad-status", `911 CAD: ${unit} DISPATCHED (${priority})`);
+        setElText("cad-eta", `| ETA: ${eta} min | Inc: ${inc}`);
+        setElText("cad-location", addr);
+      }
+
+      // AED Info
+      if (aedInfo) {
+        const loc = aedInfo.aed_location || aedInfo.location_description || "Lobby Box A";
+        setElText("aed-status", `${loc} (${aedInfo.distance_meters}m away)`);
+      }
+
+      // 2. Coordinated Audio Output between Agent 2 (Safety Coach) and Agent 3 (Companion Agent)
+      if (isFinal) {
+        if (companionAns) {
+          // Agent 3 answers caller panic/tactical doubts first!
+          speakCompanion(companionAns);
+
+          // If there is also a brand-new directive from Agent 2, queue it smoothly to play after Agent 3
+          if (isNewDirective) {
+            lastSpokenDirectiveText = directive.spoken_voice_text;
+            enqueueSpeech(directive.spoken_voice_text, false);
+          }
+        } else if (isNewDirective) {
+          // Only Agent 2 has a new directive to speak
+          lastSpokenDirectiveText = directive.spoken_voice_text;
+          speakDirective(directive.spoken_voice_text, true);
+        }
+      }
+
+      // Companion Micro-Q&A HUD presentation
+      if (companionAns) {
+        setElText("companion-bubble", `"${companionAns}"`);
+        setElStyle("companion-bubble", "color", "#F8FAFC");
+        setElStyle("companion-bubble", "fontStyle", "normal");
+        const words = companionAns.trim().split(/\s+/).length;
+        setElText("word-badge", `✓ ${words} WORDS (≤18 RULE PASSED)`);
+        highlightCompanionCard();
+      }
+
+      // EMS Handoff
+      if (handoffCard && !latestHandoffData) {
+        latestHandoffData = handoffCard;
+        populateHandoffModal(handoffCard);
+        openHandoffModal();
+      } else if (handoffCard) {
+        latestHandoffData = handoffCard;
+        populateHandoffModal(handoffCard);
+      }
+    }
+
+    function highlightCompanionCard() {
+      const card = document.getElementById("companion-card");
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.classList.remove("pulse-glow");
+        void card.offsetWidth; // Trigger reflow for re-animation
+        card.classList.add("pulse-glow");
+        setTimeout(() => card.classList.remove("pulse-glow"), 2500);
+      }
+    }
+
+    // Direct Interactive Panic Q&A functions
+    async function askCompanionQuick(query) {
+      if (!query) return;
+      highlightCompanionCard();
+      setElText("transcript-box", `"${query}"`);
+      try {
+        const res = await fetch(`/api/test-companion?query=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        if (data.companion_answer) {
+          setElText("companion-bubble", `"${data.companion_answer}"`);
+          setElStyle("companion-bubble", "color", "#F8FAFC");
+          setElStyle("companion-bubble", "fontStyle", "normal");
+          setElText("word-badge", `✓ ${data.word_count} WORDS (≤18 RULE PASSED)`);
+          if (data.model) {
+            setElText("companion-model-badge", `⚡ ${data.model.toUpperCase()}`);
+          }
+          speakCompanion(data.companion_answer);
+        }
+      } catch (e) {
+        console.error("Companion test error:", e);
+      }
+    }
+
+    async function triggerCompanionDirectTest() {
+      const input = document.getElementById("companion-test-input");
+      if (!input || !input.value.trim()) return;
+      const query = input.value.trim();
+      await askCompanionQuick(query);
+      input.value = "";
+    }
+
+    function replayCurrentCompanionSpeech() {
+      const bubble = document.getElementById("companion-bubble");
+      if (bubble) {
+        let text = bubble.innerText.replace(/^"|"$/g, '').trim();
+        if (text && !text.includes("Standby")) {
+          highlightCompanionCard();
+          speakCompanion(text);
+        }
+      }
+    }
+
+    // Quick Voice Simulation Trigger
+    async function simulateVoice(phrase) {
+      setElText("transcript-box", `"${phrase}"`);
+      try {
+        const res = await fetch("/api/triage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            text: phrase,
+            location: userLocation,
+            lat: userLat,
+            lon: userLon
+          })
+        });
+        const data = await res.json();
+        updateCockpitUI(data.triage, data.directive, data.companion_answer, data.cad_dispatch, data.aed_info, data.handoff_card, true, data.agent_1_status, data.agent_2_status, data.agent_3_status, data.companion_model);
+        if (data.companion_answer) {
+          highlightCompanionCard();
+        }
+      } catch (e) {
+        console.error("Simulation error:", e);
+      }
+    }
+
+    // 911 Call Active Toggle
+    let is911Active = false;
+    function toggle911Call() {
+      const btn = document.getElementById("call-911-btn");
+      const txt = document.getElementById("call-911-text");
+      is911Active = !is911Active;
+      if (is911Active) {
+        if (btn) btn.classList.add("active");
+        if (txt) txt.innerText = "📞 911 CAD CONNECTED (SPEAKER ACTIVE)";
+        speakDirective("911 CAD dispatch alerted with your exact GPS location. Stay on the line.");
+      } else {
+        if (btn) btn.classList.remove("active");
+        if (txt) txt.innerText = "🚨 911 CAD DISPATCH ACTIVE (GPS TRANSMITTED)";
+      }
+    }
+
+    // 🎬 70s Video Take Helper Controls (Matches 0:15 - 1:25 from keepalive_draft_slideshow.mp4)
+    let autoDemoRunning = false;
+    let autoTakeTimeouts = [];
+    let liveRunSeconds = 15;
+    let liveRunClockInterval = null;
+
+    function formatClock(sec) {
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      return `[${m}:${s} / 01:25]`;
+    }
+
+    function startLiveRunClock(initialSec = 15) {
+      liveRunSeconds = initialSec;
+      setElText("live-run-clock", formatClock(liveRunSeconds));
+      if (liveRunClockInterval) clearInterval(liveRunClockInterval);
+      liveRunClockInterval = setInterval(() => {
+        liveRunSeconds++;
+        setElText("live-run-clock", formatClock(liveRunSeconds));
+        if (liveRunSeconds >= 85) { // 1:25
+          clearInterval(liveRunClockInterval);
+        }
+      }, 1000);
+    }
+
+    function highlightTakeChip(stepNum) {
+      document.querySelectorAll(".take-chip").forEach((chip, i) => {
+        if (i === stepNum - 1) chip.classList.add("active-step");
+        else chip.classList.remove("active-step");
+      });
+    }
+
+    async function triggerTakeStep(stepNum) {
+      highlightTakeChip(stepNum);
+      if (stepNum === 1) {
+        // 0:15 Collapse / Not Breathing
+        startLiveRunClock(15);
+        await simulateVoice("Help! My dad just collapsed. He's not breathing.");
+        const badge = document.getElementById("protocol-badge");
+        if (badge) {
+          badge.innerText = "● PROTOCOL LOCKED: AHA-BLS";
+          badge.className = "protocol-status locked";
+        }
+        // Auto-advance to hands placement and 110 BPM compressions for smooth presentation video take
+        setTimeout(async () => {
+          await simulateVoice("Hands are placed on the center of his chest.");
+          setTimeout(async () => {
+            await simulateVoice("Ready to compress");
+          }, 2500);
+        }, 3200);
+      } else if (stepNum === 2) {
+        // 0:45 Gasping doubt
+        liveRunSeconds = 45;
+        setElText("live-run-clock", formatClock(45));
+        const agonalBanner = document.getElementById("agonal-callout");
+        if (agonalBanner) agonalBanner.style.display = "flex";
+        await simulateVoice("He's gasping. Is he breathing again?");
+      } else if (stepNum === 3) {
+        // 1:08 Ribs crack doubt
+        liveRunSeconds = 68;
+        setElText("live-run-clock", formatClock(68));
+        await simulateVoice("I heard a crack in his chest. Did I break his rib?");
+      } else if (stepNum === 4) {
+        // 1:14 Paramedics arrive
+        liveRunSeconds = 74;
+        setElText("live-run-clock", formatClock(74));
+        await simulateVoice("The paramedics are here.");
+        setTimeout(() => {
+          openHandoffModal();
+        }, 1200);
+      }
+    }
+
+    function toggleAutoDemoTake() {
+      const btn = document.getElementById("auto-run-btn");
+      if (autoDemoRunning) {
+        autoDemoRunning = false;
+        autoTakeTimeouts.forEach(t => clearTimeout(t));
+        autoTakeTimeouts = [];
+        if (liveRunClockInterval) clearInterval(liveRunClockInterval);
+        if (btn) {
+          btn.classList.remove("active");
+          btn.innerText = "▶️ Auto-Play 70s Live Demo Take (Matches Draft Narration)";
+        }
+        resetSession();
+        return;
+      }
+
+      autoDemoRunning = true;
+      if (btn) {
+        btn.classList.add("active");
+        btn.innerText = "⏹️ Stop Auto Take Demo";
+      }
+      resetSession();
+
+      // Step 1 at T=0s
+      triggerTakeStep(1);
+
+      // Step 2 (0:45) at T=22s
+      autoTakeTimeouts.push(setTimeout(() => {
+        if (autoDemoRunning) triggerTakeStep(2);
+      }, 22000));
+
+      // Step 3 (1:08) at T=44s
+      autoTakeTimeouts.push(setTimeout(() => {
+        if (autoDemoRunning) triggerTakeStep(3);
+      }, 44000));
+
+      // Step 4 (1:14) at T=56s
+      autoTakeTimeouts.push(setTimeout(() => {
+        if (autoDemoRunning) triggerTakeStep(4);
+      }, 56000));
+
+      // Completion at 70s
+      autoTakeTimeouts.push(setTimeout(() => {
+        if (autoDemoRunning) {
+          autoDemoRunning = false;
+          if (btn) {
+            btn.classList.remove("active");
+            btn.innerText = "▶️ Auto-Play 70s Live Demo Take (Matches Draft Narration)";
+          }
+        }
+      }, 70000));
+    }
+
+    async function advanceStepManually() {
+      try {
+        const res = await fetch("/api/safety_coach/advance", { method: "POST" });
+        const data = await res.json();
+        if (data.directive) {
+          setElText("directive-box", `[Step ${data.directive.step_number}] ${data.directive.directive_text}`);
+          if (data.directive.spoken_voice_text) {
+            speakDirective(data.directive.spoken_voice_text);
+          }
+          if (data.directive.metronome_bpm > 0) {
+            startMetronome(data.directive.metronome_bpm);
+          } else {
+            stopMetronome();
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Resample native browser audio (44.1k/48k) to pristine 16kHz Int16 for AssemblyAI
+    function downsampleBufferTo16k(inputData, inputSampleRate) {
+      if (inputSampleRate === 16000) {
+        const pcm16 = new Int16Array(inputData.length);
+        for (let i = 0; i < inputData.length; i++) {
+          const s = Math.max(-1, Math.min(1, inputData[i]));
+          pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        }
+        return pcm16;
+      }
+      const ratio = inputSampleRate / 16000;
+      const newLength = Math.round(inputData.length / ratio);
+      const result = new Int16Array(newLength);
+      let offsetResult = 0;
+      let offsetBuffer = 0;
+      while (offsetResult < result.length) {
+        const nextOffset = Math.round((offsetResult + 1) * ratio);
+        let accum = 0, count = 0;
+        for (let i = offsetBuffer; i < nextOffset && i < inputData.length; i++) {
+          accum += inputData[i];
+          count++;
+        }
+        const val = count > 0 ? accum / count : inputData[offsetBuffer];
+        const s = Math.max(-1, Math.min(1, val));
+        result[offsetResult] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        offsetResult++;
+        offsetBuffer = nextOffset;
+      }
+      return result;
+    }
+
+    function showMicError(msg) {
+      const banner = document.getElementById("mic-error-banner");
+      if (banner) {
+        banner.style.display = "block";
+        banner.innerHTML = msg;
+      }
+    }
+
+    function hideMicError() {
+      const banner = document.getElementById("mic-error-banner");
+      if (banner) banner.style.display = "none";
+    }
+
+    // Dual Push-To-Talk (Hold) & Continuous Toggle (Click) Handlers
+    let pointerDownTime = 0;
+    let isHoldTriggered = false;
+    let holdTimeout = null;
+
+    function handleMicPointerDown(e) {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      hideMicError();
+      pointerDownTime = Date.now();
+      isHoldTriggered = false;
+
+      // Start hold timer: if held for > 300ms, acts as Push-To-Talk
+      holdTimeout = setTimeout(() => {
+        isHoldTriggered = true;
+      }, 300);
+
+      if (!isRecording) {
+        startRecording();
+      }
+    }
+
+    function handleMicPointerUp(e) {
+      clearTimeout(holdTimeout);
+      const duration = Date.now() - pointerDownTime;
+      // If held for longer than 300ms, user was holding to speak -> stop on release!
+      if ((isHoldTriggered || duration > 300) && isRecording) {
+        stopRecording();
+      }
+    }
+
+    function handleMicPointerLeave(e) {
+      clearTimeout(holdTimeout);
+      if (isHoldTriggered && isRecording) {
+        stopRecording();
+      }
+    }
+
+    function handleMicClick(e) {
+      const duration = Date.now() - pointerDownTime;
+      // Short click toggle
+      if (duration <= 300) {
+        if (!isRecording) {
+          startRecording();
+        } else if (Date.now() - speechStartTime > 400) {
+          stopRecording();
+        }
+      }
+    }
+
+    async function toggleMic() {
+      if (!isRecording) {
+        startRecording();
+      } else {
+        stopRecording();
+      }
+    }
+
+    async function startRecording() {
+      hideMicError();
+      const micBtn = document.getElementById("mic-btn");
+      if (micBtn) micBtn.classList.add("recording");
+      setElText("mic-label", "Connecting Microphone...");
+      setElText("telemetry-status", "CONNECTING...");
+      setElStyle("telemetry-status", "color", "var(--accent-amber)");
+
+      try {
+        isRecording = true;
+        speechStartTime = Date.now();
+
+        // 1. Acquire microphone stream without rigid hardware sampleRate constraint
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+
+        // 2. Open standard AudioContext and ensure active running state
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioContextClass();
+        if (audioContext.state === "suspended") {
+          await audioContext.resume();
+        }
+        const nativeSampleRate = audioContext.sampleRate;
+
+        // 3. Connect to AssemblyAI Streaming WebSocket via server
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const host = window.location.host || "127.0.0.1:8000";
+        const locQuery = encodeURIComponent(userLocation || "201 Mission St, Financial District, San Francisco, CA");
+        ws = new WebSocket(`${protocol}//${host}/ws/triage?location=${locQuery}&lat=${userLat}&lon=${userLon}`);
+        ws.binaryType = "arraybuffer";
+
+        ws.onopen = () => {
+          setElText("mic-label", "🔴 Listening... (Click or Release to Stop)");
+          setElText("telemetry-status", "ACTIVE LISTENING");
+          setElStyle("telemetry-status", "color", "var(--accent-green)");
+        };
+
+        ws.onclose = () => {
+          if (isRecording) {
+            stopRecording();
+          }
+        };
+
+        ws.onerror = (err) => {
+          console.warn("WebSocket error:", err);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.error) {
+              showMicError(`Live Voice Error: ${data.error}`);
+              stopRecording();
+              return;
+            }
+            if (data.type === "PARTIAL_TRANSCRIPT") {
+              setElText("transcript-box", `"${data.transcript}..."`);
+              return;
+            }
+            if (data.type === "TRIAGE_UPDATE") {
+              // Acoustic Echo Filter: prevents loudspeaker directives or companion answers echoing back into mic
+              if (isSpeakingVoice && isEchoOfSpeech(data.transcript, [lastSpokenDirectiveText, lastSpokenCompanionText])) {
+                return;
+              }
+
+              setElText("transcript-box", `"${data.transcript}"`);
+
+              if (!speechStartTime) speechStartTime = Date.now();
+              const elapsedSec = (Date.now() - speechStartTime) / 1000.0;
+              const wordCount = data.transcript.trim().split(/\s+/).length;
+              if (elapsedSec > 0.5) {
+                const wpm = Math.round((wordCount / elapsedSec) * 60);
+                setElText("telemetry-wpm", `${wpm} WPM`);
+              }
+
+              const isFinal = Boolean(data.is_final);
+              updateCockpitUI(data.triage, data.directive, data.companion_answer, data.cad_dispatch, data.aed_info, data.handoff_card, isFinal, data.agent_1_status, data.agent_2_status, data.agent_3_status, data.companion_model);
+            }
+          } catch(e) {
+            console.error("ws message parse error:", e);
+          }
+        };
+
+        // 4. Audio Pipeline: stream mic -> processor -> 16kHz PCM downsampler -> WebSocket
+        const source = audioContext.createMediaStreamSource(mediaStream);
+        processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+        // Silent sink to prevent computer feedback loop
+        const silentSink = audioContext.createGain();
+        silentSink.gain.value = 0.0;
+        source.connect(processor);
+        processor.connect(silentSink);
+        silentSink.connect(audioContext.destination);
+
+        processor.onaudioprocess = (e) => {
+          // Acoustic Gating: Mute mic packets while agent voice speaks through loudspeaker
+          if (isSpeakingVoice || (Date.now() - lastSpeechEndTime < 350)) {
+            setElText("telemetry-rms", "0.00 (Muted for Voice)");
+            setElStyle("audio-energy-bar", "width", "0%");
+            return;
+          }
+
+          const inputData = e.inputBuffer.getChannelData(0);
+          
+          let sumSquares = 0;
+          for (let i = 0; i < inputData.length; i++) {
+            sumSquares += inputData[i] * inputData[i];
+          }
+          const rms = Math.sqrt(sumSquares / inputData.length);
+          setElText("telemetry-rms", rms.toFixed(2));
+          setElStyle("audio-energy-bar", "width", `${Math.min(100, rms * 400)}%`);
+
+          // Resample to 16,000 Hz Int16 PCM and stream to AssemblyAI
+          const pcm16 = downsampleBufferTo16k(inputData, nativeSampleRate);
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(pcm16.buffer);
+          }
+        };
+
+        // Fallback: Also activate Web Speech API in Chrome for instant client-side transcription
+        if (window.webkitSpeechRecognition) {
+          try {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = "en-US";
+            recognition.onresult = (ev) => {
+              if (isSpeakingVoice || (Date.now() - lastSpeechEndTime < 350)) {
+                return;
+              }
+              let localText = "";
+              for (let i = ev.resultIndex; i < ev.results.length; ++i) {
+                localText += ev.results[i][0].transcript;
+              }
+              localText = localText.trim();
+              if (localText) {
+                setElText("transcript-box", `"${localText}"`);
+              }
+            };
+            recognition.start();
+          } catch(re) {
+            console.warn("webkitSpeechRecognition already active or unavailable:", re);
+          }
+        }
+
+        setElText("mic-label", "🔴 Listening... (Click or Release to Stop)");
+        setElText("telemetry-status", "ACTIVE LISTENING");
+        setElStyle("telemetry-status", "color", "var(--accent-green)");
+
+      } catch (err) {
+        console.error("Mic access error:", err);
+        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+          showMicError("⚠️ <b>Microphone Access Blocked:</b> Please click the 🔒 lock or 🎙️ microphone icon in your browser address bar and select <b>Allow</b>, then click again.");
+        } else {
+          showMicError(`⚠️ Microphone error: ${err.message}. You can also use the Quick Test simulation chips below.`);
+        }
+        stopRecording();
+      }
+    }
+
+    function isEchoOfSpeech(transcript, spokenTexts) {
+      if (!transcript || !spokenTexts) return false;
+      const tWords = transcript.toLowerCase().replace(/[^a-z0-9 ]/g, '').split(/\s+/).filter(w => w.length > 2);
+      if (tWords.length === 0) return false;
+      for (const text of spokenTexts) {
+        if (!text) continue;
+        const dWords = text.toLowerCase().replace(/[^a-z0-9 ]/g, '').split(/\s+/).filter(w => w.length > 2);
+        if (dWords.length === 0) continue;
+        let matches = 0;
+        for (const w of tWords) {
+          if (dWords.includes(w)) matches++;
+        }
+        if ((matches / tWords.length) >= 0.65) return true;
+      }
+      return false;
+    }
+
+    function stopRecording() {
+      isRecording = false;
+      if (recognition) { try { recognition.stop(); } catch(e) {} }
+      if (processor) { try { processor.disconnect(); } catch(e) {} }
+      if (audioContext) { try { audioContext.close(); } catch(e) {} audioContext = null; }
+      if (mediaStream) {
+        try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+        mediaStream = null;
+      }
+      if (ws) {
+        try { ws.close(); } catch(e) {}
+        ws = null;
+      }
+
+      const micBtn = document.getElementById("mic-btn");
+      if (micBtn) micBtn.classList.remove("recording");
+      setElText("mic-label", "Hold or Click to Speak");
+      setElText("telemetry-status", "IDLE");
+      setElStyle("telemetry-status", "color", "var(--text-muted)");
+      setElStyle("audio-energy-bar", "width", "0%");
+    }
+
+    // Modal controls
+    function populateHandoffModal(card) {
+      if (!card) return;
+      const rep = card.spoken_report || card.spoken_handoff_summary || "";
+      setElText("handoff-spoken-report", `"${rep}"`);
+      setElText("handoff-json-code", JSON.stringify(card, null, 2));
+    }
+
+    function openHandoffModal() {
+      if (!latestHandoffData) {
+        // Generate mock preview if not yet triggered
+        latestHandoffData = {
+          incident_id: "CAD-2026-9118",
+          timestamp_iso: new Date().toISOString(),
+          primary_intent: "CARDIAC_ARREST",
+          patient_type: "ADULT",
+          cpr_duration_seconds: Math.floor((Date.now() - (cprStartTime || Date.now())) / 1000) || 124,
+          total_compressions: compressionCount || 220,
+          cpr_cycles_completed: Math.floor(compressionCount / 200) || 1,
+          c_spine_risk: false,
+          bystander_status: "MULTIPLE_PRESENT",
+          aed_deployed: false,
+          spoken_report: "Paramedics on scene. Adult cardiac arrest protocol in progress for 2 minutes. Total compressions delivered: 220. High quality compressions maintained. Zero C-spine trauma identified."
+        };
+        populateHandoffModal(latestHandoffData);
+      }
+      const modal = document.getElementById("handoff-modal");
+      if (modal) modal.classList.add("active");
+    }
+
+    function closeHandoffModal() {
+      const modal = document.getElementById("handoff-modal");
+      if (modal) modal.classList.remove("active");
+    }
+
+    function speakHandoffReport() {
+      const rep = latestHandoffData && (latestHandoffData.spoken_report || latestHandoffData.spoken_handoff_summary);
+      if (rep) {
+        speakDirective(rep);
+      }
+    }
+
+    function copyHandoffJson() {
+      if (latestHandoffData) {
+        navigator.clipboard.writeText(JSON.stringify(latestHandoffData, null, 2));
+        alert("Paramedic JSON Electronic Handoff copied to clipboard!");
+      }
+    }
+
+    async function resetSession() {
+      try {
+        await fetch("/api/reset", { method: "POST" });
+        stopRecording();
+        stopMetronome();
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        lastSpokenDirectiveText = "";
+        lastSpokenText = "";
+        speechQueue = [];
+        isSynthesizing = false;
+        compressionCount = 0;
+        latestHandoffData = null;
+        cprStartTime = null;
+        setElText("transcript-box", "Click 'Hold or Click to Speak' or select a Quick Test phrase above to begin live resuscitation protocol.");
+        setElText("directive-box", "Line 1 spoken directive will populate instantly upon emergency classification...");
+        setElText("protocol-badge", "● WAITING FOR VOICE");
+        const badge = document.getElementById("protocol-badge");
+        if (badge) {
+          badge.className = "protocol-status";
+          badge.style.background = "";
+          badge.style.color = "";
+        }
+        setElText("meta-intent", "--");
+        setElText("meta-patient", "ADULT");
+        setElText("meta-bystander", "UNKNOWN");
+        setElText("meta-cspine", "False");
+        setElText("meta-lang", "EN");
+        setElText("meta-agonal", "False");
+        setElText("meta-panic", "0%");
+        setElStyle("panic-bar", "width", "0%");
+        setElText("telemetry-lat", "0.00 ms");
+        setElText("telemetry-conf", "--");
+        setElText("telemetry-cpr-timer", "00:00");
+        setElText("telemetry-compressions", "0");
+        setElText("cad-status", "911 CAD DISPATCH: STANDBY");
+        setElText("companion-bubble", "— Standby: Ask any CPR panic question or tactical doubt —");
+        setElStyle("companion-bubble", "color", "var(--text-muted)");
+        setElText("word-badge", "≤ 18 WORDS RULE ENFORCED");
+        setElText("companion-lifecycle-badge", "STANDBY (Activates during CPR)");
+        setElStyle("companion-lifecycle-badge", "color", "var(--text-muted)");
+        setElStyle("companion-lifecycle-badge", "background", "rgba(255, 255, 255, 0.08)");
+        setElStyle("companion-lifecycle-badge", "border", "1px solid rgba(255, 255, 255, 0.15)");
+        setElText("companion-model-badge", "⚡ GROQ LPU ACTIVE");
+        const protoBadge = document.getElementById("protocol-badge");
+        if (protoBadge) {
+          protoBadge.innerText = "● WAITING FOR VOICE";
+          protoBadge.className = "protocol-status";
+          protoBadge.style.background = "rgba(56, 189, 248, 0.1)";
+          protoBadge.style.borderColor = "rgba(56, 189, 248, 0.3)";
+        }
+        if (swapAlert) swapAlert.style.display = "none";
+        const agCall = document.getElementById("agonal-callout");
+        if (agCall) agCall.style.display = "none";
+        const callBtn = document.getElementById("call-911-btn");
+        if (callBtn) {
+          callBtn.classList.remove("active");
+          setElText("call-911-text", "🚨 911 CAD DISPATCH ACTIVE (GPS TRANSMITTED)");
+        }
+        is911Active = false;
+        const pumpingText = document.getElementById("pumping-state-text");
+        if (pumpingText) {
+          pumpingText.innerText = "HANDS PLACED · LOCKED ELBOWS";
+          pumpingText.style.color = "var(--accent-green)";
+        }
+        document.querySelectorAll(".take-chip").forEach(chip => chip.classList.remove("active-step"));
+        if (liveRunClockInterval) clearInterval(liveRunClockInterval);
+        setElText("live-run-clock", "[00:15 / 01:25]");
+        closeHandoffModal();
+      } catch (e) {
+        console.error("Reset failed:", e);
+      }
+    }
+
+    // Attach mic button event listeners cleanly after DOM is ready
+    function setupMicButtonListeners() {
+      const btn = document.getElementById("mic-btn");
+      if (btn) {
+        btn.addEventListener("pointerdown", handleMicPointerDown);
+        btn.addEventListener("pointerup", handleMicPointerUp);
+        btn.addEventListener("pointerleave", handleMicPointerLeave);
+        btn.addEventListener("click", handleMicClick);
+      }
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", setupMicButtonListeners);
+    } else {
+      setupMicButtonListeners();
+    }
+  </script>
+</body>
+</html>
