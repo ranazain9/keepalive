@@ -3,6 +3,7 @@
 **Built for the AssemblyAI Voice Agent Hackathon on lablab.ai**
 
 <p align="left">
+  <a href="https://keepalive-dpt7.onrender.com"><img src="https://img.shields.io/badge/Live%20Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white" alt="Live Demo on Render" /></a>
   <a href="https://www.assemblyai.com/"><img src="https://img.shields.io/badge/AssemblyAI-Real--Time%20Streaming%20v3%20(Universal--3.5%20Pro)-blue?style=for-the-badge&logo=soundcharts" alt="AssemblyAI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License: MIT" /></a>
   <a href="https://cpr.heart.org"><img src="https://img.shields.io/badge/Protocol-AHA%20BLS%20110%20BPM-orange?style=for-the-badge" alt="AHA BLS 110 BPM" /></a>
@@ -10,6 +11,7 @@
   <a href="https://github.com/ranazain9/keepalive"><img src="https://img.shields.io/badge/Tests-60%2F60%20Passing%20(100%25)-brightgreen?style=for-the-badge" alt="Tests" /></a>
 </p>
 
+> 🚑 **Live Production Cockpit:** **[https://keepalive-dpt7.onrender.com](https://keepalive-dpt7.onrender.com)**  
 > *"In computer networking, a `keep-alive` packet maintains the connection.*  
 > *In emergency medicine, **KeepAlive** maintains human life—pumping oxygenated blood to the brain and controlling lethal hemorrhage until paramedics arrive."*
 
@@ -168,7 +170,12 @@ keepalive/
 
 ## 🚀 Quickstart
 
-### Prerequisites
+### 🌐 Live Hosted Deployment
+The production application is deployed and live on Render:  
+👉 **[https://keepalive-dpt7.onrender.com](https://keepalive-dpt7.onrender.com)**  
+*(Native WebSocket audio streaming, 3-agent orchestration, 3-way theme switcher, and 110 BPM metronome engine).*
+
+### Local Prerequisites
 * Python 3.10+ (Tested on Python 3.13)
 * Node.js 18+ & npm
 * AssemblyAI API Key ([Get one free](https://www.assemblyai.com/))
