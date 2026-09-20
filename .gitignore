@@ -49,6 +49,7 @@ venv.bak/
 *.webm
 *.raw
 *.mp4
+!client/public/videos/*.mp4
 *.mkv
 recordings/
 temp_audio/
