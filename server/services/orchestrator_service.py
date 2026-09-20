@@ -7,6 +7,7 @@ Coordinates the multi-agent resuscitation lifecycle:
 """
 
 import os
+import re
 import time
 from typing import Optional, Dict, Any
 
@@ -107,7 +108,7 @@ class RescueOrchestrator:
             triage_res.intent = self.safety_coach.state.active_intent or EmergencyIntent.CARDIAC_ARREST
             triage_res.action = TriageAction.LOCK_PROTOCOL
 
-            logger.info("🔒 [Orchestrator] Paramedics on scene: final answer delivered, system locked.")
+            logger.info("🔒 [Orchestrator] Paramedics on scene: concluding directive and handoff card delivered.")
 
             return {
                 "triage": triage_res,
@@ -120,7 +121,8 @@ class RescueOrchestrator:
                 "agent_1_status": "CLOSED_HANDED_OFF",
                 "agent_2_status": "PARAMEDICS_ARRIVED_LOCKED",
                 "agent_3_status": "INCIDENT_CONCLUDED",
-                "companion_model": "Groq LPU (qwen/qwen3.8-27b)" if os.getenv("GROQ_API_KEY") else "Deterministic Reflex"
+                "companion_model": "Groq LPU (qwen/qwen3.8-27b)" if os.getenv("GROQ_API_KEY") else "Deterministic Reflex",
+                "reset_after_ans": True
             }
 
         # 1. Agent #1: Triage Classification with location awareness
@@ -186,6 +188,7 @@ class RescueOrchestrator:
                 triage_res.action = TriageAction.LOCK_PROTOCOL
 
         user_advanced_step = (self.safety_coach.state.current_step_index > initial_step_index)
+        entering_step_3 = (initial_step_index < 2 and self.safety_coach.state.current_step_index >= 2)
         is_cpr_active = (
             self.safety_coach.state.is_locked 
             and self.safety_coach.state.active_intent == EmergencyIntent.CARDIAC_ARREST
@@ -193,27 +196,38 @@ class RescueOrchestrator:
         )
 
         # 3. Agent #3: Companion Micro-Q&A & Groq LPU Doctor
+        # STRICT RULE: When Agent 2 is guiding (Step 1, Step 2, step transitions, countdowns),
+        # Agent 2's clinical directive MUST speak cleanly and exclusively!
+        # Agent 3 MUST NOT work while Agent 2 is guiding!
+        # Agent 3 only activates during active CPR downstrokes when caller has a question or panic doubt.
+        is_question_or_panic = self._is_panic_query(text)
+        lowered_text = text.lower()
+        is_explicit_companion = any(k in lowered_text for k in [
+            "agent 3", "agent three", "companion", "hello agent", "talk to me", "who are you", "are you there", "can you hear me"
+        ])
         companion_ans = None
-        if not self.safety_coach.state.is_locked:
+
+        # Agent 3 NEVER interrupts while Agent 2 is guiding positioning or countdowns:
+        should_trigger_companion = (
+            is_cpr_active
+            and not user_advanced_step
+            and not entering_step_3
+            and (is_question_or_panic or is_explicit_companion)
+        )
+
+        if should_trigger_companion:
             companion_ans = self.companion_agent.process_utterance(
                 text,
-                active_intent=triage_res.intent,
-                protocol_step=1,
-                cpr_active=False
+                active_intent=self.safety_coach.state.active_intent or triage_res.intent,
+                protocol_step=self.safety_coach.state.current_step_index + 1,
+                cpr_active=True,
+                cad_dispatched=bool(self.safety_coach.state.cad_dispatch),
+                patient_type=self.safety_coach.state.patient_type or triage_res.patient_type
             )
-        elif just_locked:
-            companion_ans = None
+            # Preserve active directive without interrupting compressions
+            directive_event = self.safety_coach.get_current_directive()
         else:
-            is_pure_advance = user_advanced_step and not any(k in text.lower() for k in ["?", "what", "how", "where", "why", "can", "should", "did", "break", "crack", "never", "not", "sued", "hurt", "dying", "dead", "tired"])
-            if not is_pure_advance:
-                companion_ans = self.companion_agent.process_utterance(
-                    text,
-                    active_intent=self.safety_coach.state.active_intent or triage_res.intent,
-                    protocol_step=self.safety_coach.state.current_step_index + 1,
-                    cpr_active=is_cpr_active,
-                    cad_dispatched=bool(self.safety_coach.state.cad_dispatch),
-                    patient_type=self.safety_coach.state.patient_type or triage_res.patient_type
-                )
+            companion_ans = None
 
         # 4. Paramedic Handoff Card
         if self.safety_coach.state.paramedics_arrived:
@@ -235,15 +249,15 @@ class RescueOrchestrator:
             handoff_card = self.safety_coach.state.handoff_card
 
         # Explicit Lifecycle Statuses
-        if just_locked:
-            agent_1_status = "LOCKED_AND_HANDED_OFF"
-        elif self.safety_coach.state.is_locked:
+        if just_locked or self.safety_coach.state.is_locked:
             agent_1_status = "CLOSED_HANDED_OFF"
         else:
             agent_1_status = "ACTIVE_TRIAGING"
 
         if self.safety_coach.state.paramedics_arrived:
             agent_2_status = "PARAMEDICS_ARRIVED_LOCKED"
+        elif is_cpr_active:
+            agent_2_status = "ACTIVE_CPR_110BPM"
         elif self.safety_coach.state.is_locked:
             agent_2_status = f"ACTIVE_STEP_{self.safety_coach.state.current_step_index + 1}"
         else:
@@ -251,12 +265,12 @@ class RescueOrchestrator:
 
         if self.safety_coach.state.paramedics_arrived:
             agent_3_status = "INCIDENT_CONCLUDED"
-        elif not self.safety_coach.state.is_locked:
-            agent_3_status = "STANDBY_PRE_TRIAGE"
-        elif just_locked:
-            agent_3_status = "STANDBY_STEP_1_DIRECTIVE"
+        elif not is_cpr_active:
+            agent_3_status = "STANDBY (Agent 2 Guiding)"
+        elif companion_ans:
+            agent_3_status = "ACTIVE_QNA_RESPONDER"
         else:
-            agent_3_status = "ACTIVE_GROQ_LLM"
+            agent_3_status = "ACTIVE_CPR_PACING_COMPANION"
 
         companion_model = "Groq LPU (qwen/qwen3.8-27b)" if os.getenv("GROQ_API_KEY") else "Deterministic Reflex"
 
@@ -273,3 +287,40 @@ class RescueOrchestrator:
             "agent_3_status": agent_3_status,
             "companion_model": companion_model
         }
+
+    def _is_panic_query(self, text: str) -> bool:
+        """
+        Determines if rescuer utterance is a genuine panic doubt, question, or FAQ
+        that requires Agent #3 resuscitation companion answering.
+        Suppresses countdown echoes and step advance affirmations.
+        """
+        if not text or not text.strip():
+            return False
+        lowered = text.lower().strip()
+
+        # 1. Direct Question Mark
+        if "?" in text:
+            return True
+
+        # 2. Exclude countdown echo and advance affirmations
+        countdown_echo_phrases = [
+            "3 2 1", "3... 2... 1", "push to the beat", "two inches", "at least 2 inches",
+            "chest rise fully", "hard and fast", "heel of hand", "lock elbows",
+            "hands placed", "ready to compress"
+        ]
+        if any(p in lowered for p in countdown_echo_phrases):
+            return False
+
+        words = set(re.findall(r"\b[a-z']+\b", lowered))
+        affirmations = {
+            "ready", "done", "placed", "next", "ok", "okay", "yes", "yeah",
+            "push", "beat", "pushed", "pushing", "i'm", "im", "got", "it",
+            "started", "starting", "compress", "compressing", "compressions", "to"
+        }
+        if words.issubset(affirmations):
+            return False
+
+        # 3. If not an echo or advance affirmation, any rescuer speech during CPR
+        # (questions, doubts, confusion, panic, fatigue) is handled by Agent #3
+        return True
+

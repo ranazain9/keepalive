@@ -24,11 +24,13 @@ def make_triage_router(orchestrator: RescueOrchestrator) -> APIRouter:
         Processes rescuer speech turn.
         Coordinates Agent 1 (Triage) -> Agent 2 (Safety Coach) -> Agent 3 (Companion).
         """
-        return orchestrator.process_utterance(
+        res = orchestrator.process_utterance(
             text=payload.text,
             location=payload.location,
             lat=payload.lat,
             lon=payload.lon
         )
+        res["is_final"] = True
+        return res
 
     return router

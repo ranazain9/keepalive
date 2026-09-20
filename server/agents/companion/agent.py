@@ -15,6 +15,9 @@ from server.agents.companion.handoff_generator import EMSHandoffGenerator
 from server.core.logger import logger
 
 GROUNDING_PHRASES = {
+    "confused": "Stay calm, I am guiding you. Hands in center of chest, lock elbows, push to the beat.",
+    "lost": "I am right here with you. Look at their chest, lock elbows, and push to the beat.",
+    "unsure": "You are doing it right. Keep your elbows straight and push to the beat.",
     "scared": "You are doing everything right. Stay focused on the rhythm. Help is on the way.",
     "i can't": "You CAN do this. You are keeping blood flowing to their brain right now.",
     "is he dead": "Do not give up. Compressions are keeping them alive. Push to the beat.",
@@ -84,10 +87,22 @@ class CompanionAgent:
             return safe_resp
 
         # 3. Context-Aware Emotional Grounding for caller distress expressions
-        for trigger in ["scared", "freaking out", "i can't", "can't do this", "shaking", "crying", "panic"]:
+        grounding_triggers = [
+            "confused", "lost", "unsure", "don't understand", "dont understand",
+            "don't know", "dont know", "scared", "freaking out", "i can't",
+            "can't do this", "shaking", "crying", "panic"
+        ]
+        for trigger in grounding_triggers:
             if trigger in lowered:
                 if cpr_active:
                     grounding_map = {
+                        "confused": "Stay calm, I am guiding you. Hands in center of chest, lock elbows, push to the beat.",
+                        "lost": "I am right here with you. Look at their chest, lock elbows, and push to the beat.",
+                        "unsure": "You are doing it right. Keep your elbows straight and push to the beat.",
+                        "don't understand": "Stay calm, I will guide every step. Hands in center of chest, push to the beat.",
+                        "dont understand": "Stay calm, I will guide every step. Hands in center of chest, push to the beat.",
+                        "don't know": "Don't panic, I will guide you. Heel on center of chest, lock elbows, push to the beat.",
+                        "dont know": "Don't panic, I will guide you. Heel on center of chest, lock elbows, push to the beat.",
                         "scared": "You are doing everything right. Stay focused on the rhythm. Help is on the way.",
                         "freaking out": "Breathe. Look at your hands on the chest. Push hard and fast.",
                         "i can't": "You CAN do this. You are keeping blood flowing to their brain right now.",
@@ -98,6 +113,13 @@ class CompanionAgent:
                     }
                 else:
                     grounding_map = {
+                        "confused": "Take a breath. I am right here with you. Tell me if the person is awake or breathing.",
+                        "lost": "I am with you. Look at the person right now. Are they awake or breathing?",
+                        "unsure": "Take a breath. Look at the person: are they awake or breathing?",
+                        "don't understand": "Take a breath. I am right here. Tell me if they are awake or breathing.",
+                        "dont understand": "Take a breath. I am right here. Tell me if they are awake or breathing.",
+                        "don't know": "Take a breath. Look at the chest. Is it rising and falling?",
+                        "dont know": "Take a breath. Look at the chest. Is it rising and falling?",
                         "scared": "You are doing everything right. Take a breath and check if they are breathing.",
                         "freaking out": "Take a deep breath. I am with you. Tell me if they are awake.",
                         "i can't": "You can do this. Stay calm and tell me if they are breathing.",
@@ -116,8 +138,10 @@ class CompanionAgent:
             failsafe = "Do not stop compressions. Lock elbows straight and push hard to the beat."
             logger.info("🛡️ [Companion Safety Boundary] Emitted offline failsafe CPR anchor.")
             return enforce_section_4_safety_gate(failsafe)
-
-        return None
+        else:
+            failsafe = "I am right here with you. Help is on the way. Focus on the patient."
+            logger.info("🛡️ [Companion Safety Boundary] Emitted pre-CPR reassurance anchor.")
+            return enforce_section_4_safety_gate(failsafe)
 
     def generate_ems_handoff(
         self,

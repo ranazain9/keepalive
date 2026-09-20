@@ -1,0 +1,1144 @@
+/* KeepAlive Rescue Cockpit: Exact Replication of Clinical Design Mockup */
+
+:root {
+  --bg-clinical: #F0F4F8;
+  --card-clinical: #FFFFFF;
+  --border-clinical: #DCE5ED;
+  --navy-dark: #0A2540;
+  --navy-ribbon: #0B2545;
+  --cyan-clinical: #00A8E8;
+  --cyan-light: #EBF8FE;
+  --cyan-subtle: rgba(0, 168, 232, 0.12);
+  --red-alert: #EF4444;
+  --amber-swap: #F59E0B;
+  --text-primary: #0A2540;
+  --text-muted: #64748B;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+.cockpit-container {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   Top Telemetry Bar
+   ========================================================================== */
+.top-telemetry-bar {
+  width: 100%;
+  background: #FFFFFF;
+  border: 1px solid var(--border-clinical);
+  border-radius: 8px;
+  padding: 8px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(10, 37, 64, 0.04);
+}
+
+.telemetry-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.live-cad-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--red-alert);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+  animation: pulseBlink 1.4s infinite ease-in-out;
+}
+
+.live-cad-tag {
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--red-alert);
+  letter-spacing: 0.5px;
+}
+
+.live-cad-value {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--navy-dark);
+  letter-spacing: 0.3px;
+}
+
+.telemetry-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.latency-label {
+  color: var(--cyan-clinical);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.latency-value {
+  color: var(--navy-dark);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   Shared Stage Card Structure
+   ========================================================================== */
+.stage-card {
+  width: 100%;
+  background: #FFFFFF;
+  border: 1.5px solid var(--border-clinical);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(10, 37, 64, 0.05);
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   STAGE 1: TRIAGE / INTAKE
+   ========================================================================== */
+.stage-1-container {
+  padding: 16px 24px 20px;
+}
+
+.stage-1-header {
+  margin-bottom: 12px;
+}
+
+.stage-1-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--navy-dark);
+  letter-spacing: 0.5px;
+}
+
+.stage-1-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+/* Concentric Cyan Mic Orb */
+.intake-mic-orb {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.intake-mic-orb:hover {
+  transform: scale(1.05);
+}
+
+.intake-mic-orb .orb-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 168, 232, 0.4);
+  pointer-events: none;
+}
+
+.intake-mic-orb .ring-outer {
+  width: 64px;
+  height: 64px;
+}
+
+.intake-mic-orb .ring-mid {
+  width: 50px;
+  height: 50px;
+  border-color: rgba(0, 168, 232, 0.7);
+}
+
+.intake-mic-orb .orb-core {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--cyan-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.intake-mic-orb.active-listening .ring-outer {
+  animation: radarPulse 1.5s infinite ease-out;
+  border-color: var(--red-alert);
+}
+
+.intake-mic-orb.active-listening .orb-core {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.intake-mic-orb.active-listening svg {
+  stroke: var(--red-alert);
+}
+
+/* Center Waveform & Prompt Bubble */
+.stage-1-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.waveform-canvas {
+  width: 100%;
+  max-width: 540px;
+  height: 52px;
+}
+
+.intake-prompt-bubble {
+  width: 100%;
+  max-width: 540px;
+  background: #F4F9FD;
+  border: 1px solid rgba(0, 168, 232, 0.3);
+  border-radius: 8px;
+  padding: 8px 18px;
+  text-align: center;
+}
+
+.intake-prompt-bubble .prompt-text {
+  font-size: 16px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--cyan-clinical);
+  letter-spacing: 0.2px;
+}
+
+/* Right Volume Meter */
+.volume-meter-track {
+  width: 22px;
+  height: 74px;
+  background: #F1F5F9;
+  border: 1px solid var(--border-clinical);
+  border-radius: 4px;
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.meter-cylinder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.meter-fill {
+  width: 100%;
+  background: linear-gradient(to top, #00A8E8 0%, #38BDF8 80%, #EF4444 100%);
+  border-radius: 2px;
+  transition: height 0.1s ease;
+}
+
+/* ==========================================================================
+   STAGE 2: ACTIVE CPR PACING (HERO)
+   ========================================================================== */
+.stage-2-container {
+  padding-bottom: 20px;
+}
+
+.stage-2-ribbon {
+  width: 100%;
+  background: var(--navy-ribbon);
+  color: #FFFFFF;
+  padding: 9px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ribbon-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.ribbon-ecg {
+  width: 90px;
+  height: 22px;
+}
+
+.stage-2-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.08fr;
+  divide-x: 1.5px solid var(--border-clinical);
+}
+
+.stage-col {
+  padding: 16px 22px;
+}
+
+.col-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.col-header-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--navy-dark);
+  letter-spacing: 0.4px;
+  text-align: left;
+}
+
+.view-mode-toggle {
+  display: flex;
+  background: rgba(15, 23, 42, 0.08);
+  padding: 2px;
+  border-radius: 6px;
+  gap: 2px;
+}
+
+.view-toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.view-toggle-btn:hover {
+  color: var(--navy-dark);
+}
+
+.view-toggle-btn.active {
+  background: #FFFFFF;
+  color: #0284C7;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.col-header-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+/* CPR Video Monitor & HUD Styling */
+.cpr-video-monitor-container {
+  position: relative;
+  width: 100%;
+  height: 230px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #080C14;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(10, 37, 64, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cpr-video-element {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: contrast(1.08) brightness(0.98);
+}
+
+/* Subtle Diagnostic Monitor Scanlines */
+.cpr-video-scanlines {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  opacity: 0.35;
+  z-index: 2;
+}
+
+/* Diagnostic Radial Vignette */
+.cpr-video-vignette {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 45px rgba(2, 6, 23, 0.85);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Top Telemetry Overlay Status Bar */
+.cpr-video-status-bar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.cpr-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cpr-status-pill.active {
+  color: #38BDF8;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.cpr-status-pill.active .cpr-status-dot {
+  background: #38BDF8;
+  box-shadow: 0 0 8px #38BDF8;
+  animation: pulse-dot 0.6s infinite alternate ease-in-out;
+}
+
+.cpr-status-pill.standby {
+  color: #94A3B8;
+}
+
+.cpr-status-pill.standby .cpr-status-dot {
+  background: #64748B;
+}
+
+.cpr-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.cpr-hud-tag {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(15, 23, 42, 0.7);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Sternum Target Reticle Overlay */
+.cpr-sternum-reticle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 76px;
+  height: 76px;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0.82;
+  transition: opacity 0.3s ease;
+}
+
+.cpr-sternum-reticle.pulsing {
+  opacity: 1;
+}
+
+.reticle-ring {
+  position: absolute;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.reticle-ring.ring-outer {
+  width: 72px;
+  height: 72px;
+  border: 1.5px dashed rgba(56, 189, 248, 0.6);
+}
+
+.cpr-sternum-reticle.pulsing .reticle-ring.ring-outer {
+  animation: spin-reticle 8s linear infinite;
+}
+
+.reticle-ring.ring-inner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(239, 68, 68, 0.85);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+.cpr-sternum-reticle.pulsing .reticle-ring.ring-inner {
+  animation: pulse-ring 0.545s infinite alternate ease-in-out;
+}
+
+.reticle-crosshair {
+  position: absolute;
+  background: rgba(56, 189, 248, 0.5);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.reticle-crosshair.ch-x {
+  width: 84px;
+  height: 1px;
+}
+
+.reticle-crosshair.ch-y {
+  width: 1px;
+  height: 84px;
+}
+
+.reticle-label {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #38BDF8;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* Standby Overlay */
+.cpr-standby-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 12, 20, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.cpr-standby-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 20px;
+  color: #F8FAFC;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes spin-reticle {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: translate(-50%, -50%) scale(0.92); opacity: 0.7; }
+  100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; box-shadow: 0 0 14px rgba(239, 68, 68, 0.8); }
+}
+
+@keyframes pulse-dot {
+  0% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+/* Left: 3D Compressing Manikin Split */
+.manikin-stage-split {
+  display: grid;
+  grid-template-columns: 130px 1fr 64px;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  min-height: 220px;
+}
+
+.manikin-annotations {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--navy-dark);
+}
+
+.annotation-item {
+  line-height: 1.3;
+}
+
+.manikin-torso-container {
+  position: relative;
+  width: 100%;
+  height: 230px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.realistic-manikin-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.realistic-manikin-img {
+  max-height: 225px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  filter: contrast(1.03) brightness(1.02) drop-shadow(0 4px 12px rgba(10, 37, 64, 0.08));
+}
+
+/* Glowing Concentric Sternum Target */
+.sternum-target-overlay {
+  position: absolute;
+  top: 56%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.sternum-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.sternum-ring.ring-3 {
+  width: 86px;
+  height: 86px;
+  border: 2px solid rgba(239, 68, 68, 0.45);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+}
+
+.sternum-ring.ring-2 {
+  width: 60px;
+  height: 60px;
+  border: 2.5px solid rgba(245, 158, 11, 0.75);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+}
+
+.sternum-ring.ring-1 {
+  width: 36px;
+  height: 36px;
+  border: 2.5px solid #EF4444;
+}
+
+.sternum-center-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #F59E0B;
+  box-shadow: 0 0 8px #F59E0B;
+}
+
+.sternum-target-overlay.pulsing .sternum-ring.ring-3 {
+  animation: sternumPulse 0.545s infinite ease-out;
+}
+
+/* Vertical Graduated Depth Gauge */
+.depth-gauge-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.depth-readout {
+  text-align: center;
+}
+
+.depth-readout .depth-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--cyan-clinical);
+}
+
+.depth-readout .depth-value {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--cyan-clinical);
+}
+
+.depth-graduated-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 160px;
+}
+
+.depth-ticks {
+  position: relative;
+  height: 100%;
+  width: 28px;
+}
+
+.depth-ticks span {
+  position: absolute;
+  right: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.depth-bar-cylinder {
+  width: 18px;
+  height: 100%;
+  background: #EBF8FE;
+  border: 1px solid var(--border-clinical);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.depth-cylinder-fill {
+  width: 100%;
+  background: #00A8E8;
+  transition: height 0.12s ease-out;
+}
+
+.depth-target-arrow {
+  position: absolute;
+  left: 50px;
+  top: 18%;
+  color: var(--cyan-clinical);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+/* Right: Giant 110 BPM Rhythm Ring */
+.rhythm-ring-centerpiece {
+  position: relative;
+  width: 190px;
+  height: 190px;
+  margin: 12px auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Red Crosshairs */
+.crosshair-line {
+  position: absolute;
+  background: #EF4444;
+  z-index: 1;
+}
+
+.crosshair-line.horizontal {
+  width: 220px;
+  height: 2px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.crosshair-line.vertical {
+  width: 2px;
+  height: 220px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.giant-ring-outer {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2px solid #BAE6FD;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow: 0 4px 18px rgba(0, 168, 232, 0.12);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.giant-ring-outer.active-beat {
+  animation: ringBeat 0.545s infinite ease-out;
+}
+
+.giant-ring-mid {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 1.5px solid #00A8E8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.giant-ring-inner {
+  text-align: center;
+}
+
+.ring-bpm-number {
+  font-size: 46px;
+  font-weight: 900;
+  color: var(--navy-dark);
+  line-height: 1;
+  font-family: var(--font-sans);
+}
+
+.ring-bpm-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--cyan-clinical);
+  letter-spacing: 1px;
+}
+
+/* Rhythm Bottom Counters */
+.rhythm-stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 0 10px;
+}
+
+.rhythm-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.circle-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.circle-badge.cyan {
+  background: #EBF8FE;
+  border: 2px solid #00A8E8;
+  color: var(--cyan-clinical);
+}
+
+.circle-badge.amber {
+  background: #FEF3C7;
+  border: 2px solid #F59E0B;
+  color: #D97706;
+}
+
+.stat-meta {
+  flex: 1;
+}
+
+.stat-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--navy-dark);
+  margin-bottom: 4px;
+}
+
+.live-cyan-ecg {
+  width: 100%;
+  height: 14px;
+}
+
+.fatigue-progress-track {
+  width: 100%;
+  height: 6px;
+  background: #F1F5F9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.fatigue-progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, #F59E0B, #EF4444);
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+/* ==========================================================================
+   STAGE 3: EMS TABLET HANDOVER
+   ========================================================================== */
+.stage-3-container {
+  padding-bottom: 16px;
+}
+
+.stage-3-header-strip {
+  width: 100%;
+  background: #FFF5F5;
+  border-bottom: 1px solid #FEE2E2;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.medical-cross-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: #EF4444;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ecg-strip {
+  flex: 1;
+  height: 22px;
+}
+
+.ecg-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.stage-3-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  padding: 14px 20px 8px;
+  gap: 24px;
+  align-items: center;
+}
+
+.sbar-report-column {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.cad-device-icon {
+  flex-shrink: 0;
+}
+
+.sbar-details-table {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sbar-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  font-size: 11px;
+  line-height: 1.4;
+  border-bottom: 1px solid #F1F5F9;
+  padding-bottom: 4px;
+}
+
+.sbar-label {
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.sbar-value {
+  font-weight: 700;
+  color: var(--navy-dark);
+}
+
+/* Right QR Column */
+.qr-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  border-left: 1px solid var(--border-clinical);
+  padding-left: 20px;
+}
+
+.qr-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--cyan-clinical);
+  letter-spacing: 0.5px;
+}
+
+.qr-wrapper {
+  padding: 6px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-clinical);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.qr-subtitle {
+  font-size: 11px;
+  color: var(--navy-dark);
+  line-height: 1.3;
+}
+
+/* ==========================================================================
+   Quick Interactive Simulation Bar & Companion Tray
+   ========================================================================== */
+.cockpit-footer-controls {
+  width: 100%;
+  background: #FFFFFF;
+  border: 1px solid var(--border-clinical);
+  border-radius: 12px;
+  padding: 14px 20px;
+  box-shadow: 0 2px 10px rgba(10, 37, 64, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.quick-bar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.quick-chip {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--border-clinical);
+  background: #F8FAFC;
+  color: var(--navy-dark);
+  transition: all 0.15s ease;
+}
+
+.quick-chip:hover {
+  border-color: var(--cyan-clinical);
+  background: var(--cyan-light);
+  color: var(--cyan-clinical);
+}
+
+.quick-chip.danger {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+.quick-chip.purple {
+  border-color: rgba(168, 85, 247, 0.4);
+  background: #FAF5FF;
+  color: #7E22CE;
+}
+
+/* Companion Q&A input bar */
+.companion-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.companion-quick-input {
+  flex: 1;
+  background: #F8FAFC;
+  border: 1px solid var(--border-clinical);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--navy-dark);
+  outline: none;
+}
+
+.companion-quick-input:focus {
+  border-color: var(--cyan-clinical);
+}
+
+.ask-agent-btn {
+  background: var(--navy-dark);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.ask-agent-btn:hover {
+  background: var(--cyan-clinical);
+}
+
+/* ==========================================================================
+   Keyframe Animations
+   ========================================================================== */
+@keyframes pulseBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.9); }
+}
+
+@keyframes radarPulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes ringBeat {
+  0% { transform: scale(1.04); box-shadow: 0 0 20px rgba(0, 168, 232, 0.4); }
+  50% { transform: scale(1); box-shadow: 0 4px 18px rgba(0, 168, 232, 0.12); }
+  100% { transform: scale(1); }
+}
+
+@keyframes sternumPulse {
+  0% { transform: scale(0.95); opacity: 0.9; }
+  50% { transform: scale(1.12); opacity: 0.4; }
+  100% { transform: scale(0.95); opacity: 0.9; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 860px) {
+  .stage-2-grid, .stage-3-grid {
+    grid-template-columns: 1fr;
+  }
+  .qr-column {
+    border-left: none;
+    border-top: 1px solid var(--border-clinical);
+    padding-left: 0;
+    padding-top: 14px;
+  }
+}

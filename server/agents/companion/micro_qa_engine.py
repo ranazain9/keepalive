@@ -70,6 +70,15 @@ PANIC_FAQ_DATABASE: List[Dict[str, Any]] = [
         "answer": "Keep doing chest compressions in center of chest. Focus on the 110 beat."
     },
     {
+        "id": "confusion_guidance",
+        "patterns": [
+            "confused", "i am confused", "i'm confused", "im confused", "i don't understand",
+            "dont understand", "what does that mean", "i am lost", "i'm lost", "im lost",
+            "i don't know what you mean", "unsure", "not sure", "what do you mean"
+        ],
+        "answer": "Stay calm, I am guiding you. Hands in center of chest, lock elbows, and push to the beat."
+    },
+    {
         "id": "patient_alive_doubt",
         "patterns": [
             "is he dead", "is she dead", "is he alive", "is she alive", "is he going to die",

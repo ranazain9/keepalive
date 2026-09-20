@@ -113,7 +113,14 @@ class ContextualLLMCompanion:
             "7. Strict limit: Under 15 words total. Plain text only. No quotes, preambles, or markdown."
         )
 
-        models_to_try = ["qwen/qwen3.8-27b", "groq/compound-mini"]
+        models_to_try = [
+            "qwen/qwen3.8-27b",
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "groq/compound-mini",
+            "groq/compound",
+            "llama3-8b-8192"
+        ]
 
         for model in models_to_try:
             payload = {
@@ -136,7 +143,7 @@ class ContextualLLMCompanion:
                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) KeepAlive-Emergency-Agent/1.0"
                     }
                 )
-                with urllib.request.urlopen(req, timeout=2.0) as res:
+                with urllib.request.urlopen(req, timeout=2.5) as res:
                     data = json.loads(res.read().decode("utf-8"))
                     content = data["choices"][0]["message"]["content"].strip()
                     if content:
@@ -146,6 +153,11 @@ class ContextualLLMCompanion:
                         if cpr_active and not is_paramedic_done and not content.lower().endswith("beat.") and not content.lower().endswith("beat"):
                             content = f"{content.rstrip('.')} Push to the beat."
                         return content
+            except urllib.error.HTTPError as e:
+                logger.warning(f"[Agent #3 Groq LLM] HTTP {e.code} on model {model}: {e.reason}")
+                if e.code == 401:
+                    break
+                continue
             except Exception as e:
                 logger.warning(f"[Agent #3 Groq LLM] Model {model} attempt failed: {e}")
                 continue

@@ -4,7 +4,7 @@
 
 <p align="left">
   <a href="https://www.assemblyai.com/"><img src="https://img.shields.io/badge/AssemblyAI-Real--Time%20Streaming%20v3%20(Universal--3.5%20Pro)-blue?style=for-the-badge&logo=soundcharts" alt="AssemblyAI" /></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License: MIT" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License: MIT" /></a>
   <a href="https://cpr.heart.org"><img src="https://img.shields.io/badge/Protocol-AHA%20BLS%20110%20BPM-orange?style=for-the-badge" alt="AHA BLS 110 BPM" /></a>
   <a href="https://groq.com/"><img src="https://img.shields.io/badge/Companion-Groq%20LPU%20(qwen%2Fqwen3.8--27b)-purple?style=for-the-badge" alt="Groq LPU" /></a>
   <a href="https://github.com/ranazain9/keepalive"><img src="https://img.shields.io/badge/Tests-60%2F60%20Passing%20(100%25)-brightgreen?style=for-the-badge" alt="Tests" /></a>
@@ -51,7 +51,7 @@ sequenceDiagram
     Rescuer->>A2: "Hands placed on chest, ready!"
     Note over A2: Step 2 -> Step 3 Cadence Kickoff
     A2-->>Rescuer: "Ready: 3... 2... 1... PUSH! Push hard and fast to the beat!"
-    Note over A2: Continuous 110 BPM Audio Metronome Starts<br/>SVG Manikin pumps 2.2 inches in sync
+    Note over A2: Continuous 110 BPM Audio Metronome Starts<br/>Visual Pacer & Depth Gauge pulse 2.2 inches in sync
 
     Rescuer->>A3: "I've never done this before in my life!"
     Note over A3: Groq LPU qwen/qwen3.8-27b (<250ms)<br/>Section 4 Safety Gate: <=18 Words
@@ -80,6 +80,23 @@ sequenceDiagram
 | **Clinical Standard** | MARCH Trauma Protocol | AHA 2025 BLS Guidelines | Section 4 Cognitive Safety Gate | AHA / ERC Pediatric & Adult |
 | **Internet Required?** | 100% Offline Capable | 100% Offline Capable | Yes (Groq API) | 100% Offline Capable |
 | **Lifecycle State** | `ACTIVE` $\to$ `CLOSED_HANDED_OFF` | `STANDBY` $\to$ `ACTIVE_STEP_1..3` | `STANDBY` $\to$ `ACTIVE_GROQ_LLM` | Standby safety net |
+
+---
+
+## 🖥️ System Components
+
+### 1. Rescue Cockpit (Frontend - React + Vite)
+* **Real-Time Voice Streaming:** Captures microphone audio, downsamples to 16 kHz Int16 PCM, and streams over bi-directional WebSockets (`/ws/triage`).
+* **Web Audio Metronome Engine:** Generates sample-accurate 3000 Hz ducked sine clicks at 110 BPM with zero garbage collection or timer drift.
+* **Resuscitation Pacing Hero:** Visual pacer with real-time compression depth indicator (target: 2.0"–2.4"), compression counter, elapsed time, and video/anatomical guidance.
+* **Live Telemetry & Diagnostics:** Live telemetry HUD tracking pipeline latency, word velocity (WPM), audio RMS energy, and agent state transitions.
+* **Electronic EMS Handoff Modal:** Real-time paramedic transition card recording total compressions, time-on-chest, clinical timeline, and GPS coordinates for first responders.
+
+### 2. Orchestration Backend (Python 3.13 / FastAPI)
+* **AssemblyAI Real-Time WebSocket v3 Bridge:** Low-latency streaming transcription with Medical Emergency Word Boosting (`sternum`, `tourniquet`, `femoral`, `agonal`, `compressions`, `defibrillator`, `narcan`).
+* **Fast-Reflex Interim Speech Triggers:** Immediate protocol escalation on life-threatening interim phrases without waiting for silence timeouts.
+* **Acoustic Echo Filter:** Suppresses echo of agent speech during playback to prevent feedback loops while preserving barge-in interruptions.
+* **CAD Dispatcher & AED Radar:** Instant simulated CAD dispatch with reverse-geocoded address lookup and Overpass API emergency AED locator.
 
 ---
 
@@ -112,9 +129,40 @@ sequenceDiagram
 * **Streaming Speech-to-Text:** [AssemblyAI Realtime Streaming v3](https://www.assemblyai.com/) (`wss://streaming.assemblyai.com/v3/ws`) using **Universal-3.5 Pro** with Medical Emergency Word Boosting.
 * **Conversational Resuscitation Intelligence:** [Groq LPU](https://groq.com/) running `qwen/qwen3.8-27b` (~200ms latency).
 * **Backend Framework:** FastAPI / Uvicorn (Python 3.13).
+* **Frontend Framework:** React 19, Vite, Vanilla CSS design tokens.
 * **Auditory Cadence:** Web Audio API generating synthetic 3000 Hz ducked sine clicks at 110 BPM.
 * **Geolocation & Infrastructure:** Reverse-geocoded live GPS coordinates + OpenStreetMap Overpass AED radar.
 * **Safety Gating:** Section 4 Clinical Safety Gate with hard-filters against halting compressions.
+
+---
+
+## 📂 Repository Structure
+
+```
+keepalive/
+├── client/                     # Next-Gen React + Vite Rescue Cockpit
+│   ├── src/
+│   │   ├── components/         # CAD Banner, Pacing Hero, Companion, EMS Card
+│   │   ├── hooks/              # useMetronome, useRescueState, useRescueVoice
+│   │   ├── App.jsx             # Main cockpit controller
+│   │   └── index.css           # High-contrast clinical theme
+│   └── package.json
+├── server/                     # Multi-Agent Python FastAPI Service
+│   ├── agents/
+│   │   ├── triage/             # Agent #1: MARCH trauma classification
+│   │   ├── safety_coach/       # Agent #2: AHA 2025 BLS state machine
+│   │   └── companion/          # Agent #3: Groq LLM & Micro-Q&A engine
+│   ├── api/routes/             # REST & WebSocket endpoints (/ws/triage)
+│   ├── core/                   # Configuration, logging, event bus
+│   ├── schemas/                # Pydantic schemas & clinical data models
+│   ├── services/               # Rescue orchestrator coordinator
+│   ├── tests/                  # 60 automated unit & benchmark tests
+│   └── main.py                 # FastAPI application entrypoint
+├── client_test.html            # Standalone browser testing suite
+├── requirements.txt            # Python dependencies
+├── LICENSE                     # MIT License
+└── README.md
+```
 
 ---
 
@@ -122,14 +170,14 @@ sequenceDiagram
 
 ### Prerequisites
 * Python 3.10+ (Tested on Python 3.13)
+* Node.js 18+ & npm
 * AssemblyAI API Key ([Get one free](https://www.assemblyai.com/))
 * Optional: Groq API Key ([Groq Console](https://console.groq.com/))
 
-### 1. Clone & Install
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/ranazain9/keepalive.git
 cd keepalive
-pip install -r requirements.txt
 ```
 
 ### 2. Configure Environment Variables
@@ -141,17 +189,26 @@ CAD_PROVIDER=MOCK
 PORT=8000
 ```
 
-### 3. Run Automated Tests
+### 3. Setup and Start Backend
+```bash
+pip install -r requirements.txt
+py -3.13 -m uvicorn server.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+### 4. Setup and Start Frontend Cockpit
+In a new terminal:
+```bash
+cd client
+npm install
+npm run dev
+```
+Open **`http://localhost:5173`** (or `http://127.0.0.1:8000`) in your browser. Click the microphone button to start real-time hands-free emergency resuscitation assistance!
+
+### 5. Run Automated Tests
 ```bash
 py -3.13 -m unittest discover -s server/tests -p "test_*.py"
 ```
-*(All 60 tests execute and pass in ~1.6 seconds).*
-
-### 4. Start the Application
-```bash
-py -3.13 -m uvicorn server.main:app --host 127.0.0.1 --port 8000
-```
-Open **`http://127.0.0.1:8000`** in your browser. Click the microphone to start real-time emergency resuscitation assistance!
+*(All 60 tests execute and pass in ~2 seconds with sub-2ms benchmarks).*
 
 ---
 
@@ -160,6 +217,12 @@ Open **`http://127.0.0.1:8000`** in your browser. Click the microphone to start 
 * **Department of Homeland Security (DHS):** *Stop the Bleed® Guidelines for Traumatic Hemorrhage Control.*
 * **CoTCCC:** *Committee on Tactical Combat Casualty Care (MARCH Trauma Hierarchy).*
 * **Federal Good Samaritan Legislation:** *42 U.S. Code § 238q (Protection for emergency bystander resuscitation).*
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 

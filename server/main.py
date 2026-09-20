@@ -65,7 +65,9 @@ MEDICAL_BOOST_TERMS = json.dumps([
     "unresponsive", "carotid", "c-spine", "anaphylaxis", "hemorrhage",
     "paramedics", "paramedic", "ambulance", "ems"
 ])
-AAI_WS_URL = f"wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&word_boost={urllib.parse.quote(MEDICAL_BOOST_TERMS)}"
+AAI_WS_URL = f"wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&mode=min_latency&min_turn_silence=250&max_turn_silence=800&word_boost={urllib.parse.quote(MEDICAL_BOOST_TERMS)}"
+
+from fastapi.staticfiles import StaticFiles
 
 @app.get("/")
 async def get_test_page():
@@ -80,10 +82,29 @@ async def get_test_page():
             }
         )
 
+# Mount Next-Gen React + Three.js Cockpit if compiled
+if os.path.exists("client/dist"):
+    app.mount("/cockpit", StaticFiles(directory="client/dist", html=True), name="cockpit")
+
+# Concurrency guard: Ensures only 1 active streaming session to AssemblyAI
+_active_aai_ws = None
+_aai_ws_lock = asyncio.Lock()
+
 @app.websocket("/ws/triage")
 async def websocket_triage_endpoint(client_ws: WebSocket):
+    global _active_aai_ws
     await client_ws.accept()
     logger.info("🎙️ Client microphone connected to /ws/triage")
+
+    # Gracefully shut down any trailing connection to honor AssemblyAI 1-session concurrency policy
+    async with _aai_ws_lock:
+        if _active_aai_ws is not None:
+            try:
+                await _active_aai_ws.close()
+                await asyncio.sleep(0.2)
+            except Exception:
+                pass
+            _active_aai_ws = None
     
     # Extract client location metadata from query string if available
     client_location = client_ws.query_params.get("location")
@@ -98,24 +119,78 @@ async def websocket_triage_endpoint(client_ws: WebSocket):
         await client_ws.close()
         return
 
-    # Connect to AssemblyAI v3 Streaming WebSocket
+    # Connect to AssemblyAI v3 Streaming WebSocket with 25s timeout and automatic retry
     headers = {"Authorization": api_key}
     
-    try:
-        try:
-            connect_cm = websockets.connect(AAI_WS_URL, additional_headers=headers, open_timeout=10, ping_interval=5, ping_timeout=10)
-        except TypeError:
-            connect_cm = websockets.connect(AAI_WS_URL, extra_headers=headers, open_timeout=10, ping_interval=5, ping_timeout=10)
+    async def get_aai_connection():
+        for attempt in range(2):
+            try:
+                try:
+                    return await websockets.connect(
+                        AAI_WS_URL,
+                        additional_headers=headers,
+                        open_timeout=25,
+                        ping_interval=5,
+                        ping_timeout=15
+                    )
+                except TypeError:
+                    return await websockets.connect(
+                        AAI_WS_URL,
+                        extra_headers=headers,
+                        open_timeout=25,
+                        ping_interval=5,
+                        ping_timeout=15
+                    )
+            except Exception as conn_err:
+                if attempt == 0:
+                    logger.warning(f"AssemblyAI handshake retry (attempt 1 failed: {conn_err})")
+                    await asyncio.sleep(0.5)
+                    continue
+                raise conn_err
 
-        async with connect_cm as aai_ws:
+    try:
+        aai_ws = await get_aai_connection()
+        _active_aai_ws = aai_ws
+        try:
             logger.info("⚡ Connected to AssemblyAI v3 Streaming WebSocket")
             
-            # 1. Forward raw PCM audio bytes directly to v3 WebSocket
+            # 1. Forward raw PCM audio bytes (or client text) directly
             async def forward_audio():
                 try:
                     while True:
-                        data = await client_ws.receive_bytes()
-                        await aai_ws.send(data)
+                        msg = await client_ws.receive()
+                        if "bytes" in msg and msg["bytes"]:
+                            await aai_ws.send(msg["bytes"])
+                        elif "text" in msg and msg["text"]:
+                            try:
+                                payload = json.loads(msg["text"])
+                                if payload.get("type") == "FALLBACK_SPEECH":
+                                    txt = payload.get("text", "").strip()
+                                    if txt:
+                                        res = await asyncio.to_thread(
+                                            process_rescue_utterance,
+                                            txt,
+                                            location=client_location,
+                                            lat=client_lat,
+                                            lon=client_lon
+                                        )
+                                        await client_ws.send_json({
+                                            "type": "TRIAGE_UPDATE",
+                                            "is_final": True,
+                                            "transcript": txt,
+                                            "triage": res["triage"].model_dump(),
+                                            "directive": res["directive"].model_dump() if res["directive"] else None,
+                                            "companion_answer": res["companion_answer"],
+                                            "cad_dispatch": res["cad_dispatch"],
+                                            "aed_info": res["aed_info"],
+                                            "handoff_card": res["handoff_card"].model_dump() if res["handoff_card"] else None,
+                                            "agent_1_status": res["agent_1_status"],
+                                            "agent_2_status": res["agent_2_status"],
+                                            "agent_3_status": res["agent_3_status"],
+                                            "companion_model": res["companion_model"]
+                                        })
+                            except Exception as pe:
+                                logger.warning(f"Client text parse error: {pe}")
                 except WebSocketDisconnect:
                     pass
                 except Exception as e:
@@ -144,18 +219,48 @@ async def websocket_triage_endpoint(client_ws: WebSocket):
                             is_final = True
                         
                         if transcript_text:
-                            # 1. Live interim transcription: update caller screen immediately without multi-agent churn
+                            # 1. Live interim transcription: update caller screen immediately
                             if not is_final:
                                 await client_ws.send_json({
                                     "type": "PARTIAL_TRANSCRIPT",
                                     "transcript": transcript_text
                                 })
-                                continue
+                                
+                                # Fast Reflex for Turn 1 & Step Transitions:
+                                # Escalate immediately on life-threatening phrases or readiness confirmations
+                                # without waiting 800-1200ms for AssemblyAI cloud silence timeout.
+                                lowered_t = transcript_text.lower()
+                                if not orchestrator.safety_coach.state.is_locked:
+                                    has_emergency_signal = any(s in lowered_t for s in [
+                                        "not breathing", "stopped breathing", "collapsed", "unresponsive",
+                                        "no pulse", "barely breathing", "passed out", "fell down",
+                                        "heart attack", "blue lips", "gasping", "can't breathe", "cant breathe",
+                                        "is not breathing", "isn't breathing", "unconscious", "dying",
+                                        "seizure", "convulsing", "overdose", "narcan", "naloxone", "fentanyl",
+                                        "choking", "bleeding out", "stabbed", "shot", "cardiac arrest"
+                                    ])
+                                    if has_emergency_signal:
+                                        logger.info(f"⚡ [Agent #1 Fast Reflex on Interim]: '{transcript_text}'")
+                                        is_final = True
+                                    else:
+                                        continue
+                                elif orchestrator.safety_coach.state.current_step_index < 2:
+                                    # Fast advance for Step 1 -> Step 2 -> Step 3
+                                    has_advance_signal = any(w in lowered_t.split() for w in ["ready", "done", "placed", "next", "ok", "okay"])
+                                    if has_advance_signal:
+                                        logger.info(f"⚡ [Safety Coach Fast Reflex on Interim]: '{transcript_text}'")
+                                        is_final = True
+                                    else:
+                                        continue
+                                else:
+                                    # During active CPR, stream partials cleanly; turn completion triggers Agent #3 response
+                                    continue
 
                             # 2. Final speech turn: Rescuer completed utterance -> Execute coordinated multi-agent pipeline
                             logger.info(f"🗣️ Transcribed [Turn Final]: \"{transcript_text}\"")
                             
-                            res = process_rescue_utterance(
+                            res = await asyncio.to_thread(
+                                process_rescue_utterance,
                                 transcript_text,
                                 location=client_location,
                                 lat=client_lat,
@@ -181,7 +286,14 @@ async def websocket_triage_endpoint(client_ws: WebSocket):
                     logger.warning(f"Transcript receiver closed: {e}")
 
             await asyncio.gather(forward_audio(), receive_transcripts())
-
+        finally:
+            try:
+                await aai_ws.close()
+            except Exception:
+                pass
+            finally:
+                if _active_aai_ws is aai_ws:
+                    _active_aai_ws = None
     except Exception as e:
         logger.error(f"AssemblyAI connection error: {e}")
         await client_ws.send_json({"error": str(e)})
