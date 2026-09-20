@@ -1,6 +1,6 @@
-/* KeepAlive Rescue Cockpit: Exact Replication of Clinical Design Mockup */
+/* KeepAlive Rescue Cockpit: Multi-Theme Resuscitation HUD */
 
-:root {
+:root, [data-theme="clinical"] {
   --bg-clinical: #F0F4F8;
   --card-clinical: #FFFFFF;
   --border-clinical: #DCE5ED;
@@ -14,6 +14,60 @@
   --text-primary: #0A2540;
   --text-muted: #64748B;
   --font-mono: 'JetBrains Mono', monospace;
+  --bubble-bg: #F4F9FD;
+  --track-bg: #F1F5F9;
+  --chip-bg: #F8FAFC;
+  --input-bg: #F8FAFC;
+  --header-strip-bg: #FFF5F5;
+  --header-strip-border: #FEE2E2;
+  --badge-cyan-bg: #EBF8FE;
+  --badge-amber-bg: #FEF3C7;
+}
+
+[data-theme="dark"] {
+  --bg-clinical: #070D18;
+  --card-clinical: #0C1626;
+  --border-clinical: #1E2D44;
+  --navy-dark: #F1F5F9;
+  --navy-ribbon: #0F1D32;
+  --cyan-clinical: #38BDF8;
+  --cyan-light: rgba(56, 189, 248, 0.15);
+  --cyan-subtle: rgba(56, 189, 248, 0.12);
+  --red-alert: #F87171;
+  --amber-swap: #FBBF24;
+  --text-primary: #F1F5F9;
+  --text-muted: #94A3B8;
+  --bubble-bg: #0F1F35;
+  --track-bg: #091322;
+  --chip-bg: #0F1F35;
+  --input-bg: #091322;
+  --header-strip-bg: rgba(239, 68, 68, 0.12);
+  --header-strip-border: rgba(239, 68, 68, 0.25);
+  --badge-cyan-bg: rgba(56, 189, 248, 0.15);
+  --badge-amber-bg: rgba(245, 158, 11, 0.15);
+}
+
+[data-theme="emergency"] {
+  --bg-clinical: #050101;
+  --card-clinical: #0E0404;
+  --border-clinical: #7F1D1D;
+  --navy-dark: #FFF1F2;
+  --navy-ribbon: #240505;
+  --cyan-clinical: #F59E0B;
+  --cyan-light: rgba(245, 158, 11, 0.18);
+  --cyan-subtle: rgba(245, 158, 11, 0.12);
+  --red-alert: #EF4444;
+  --amber-swap: #F59E0B;
+  --text-primary: #FFFFFF;
+  --text-muted: #FCA5A5;
+  --bubble-bg: #1A0505;
+  --track-bg: #140303;
+  --chip-bg: #1A0505;
+  --input-bg: #100202;
+  --header-strip-bg: rgba(239, 68, 68, 0.25);
+  --header-strip-border: rgba(239, 68, 68, 0.5);
+  --badge-cyan-bg: rgba(245, 158, 11, 0.2);
+  --badge-amber-bg: rgba(239, 68, 68, 0.2);
 }
 
 .cockpit-container {
@@ -30,7 +84,7 @@
    ========================================================================== */
 .top-telemetry-bar {
   width: 100%;
-  background: #FFFFFF;
+  background: var(--card-clinical);
   border: 1px solid var(--border-clinical);
   border-radius: 8px;
   padding: 8px 18px;
@@ -38,6 +92,50 @@
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 2px 8px rgba(10, 37, 64, 0.04);
+}
+
+/* Theme Switcher Pill in Top Telemetry Bar */
+.theme-switcher-pill {
+  display: flex;
+  align-items: center;
+  background: var(--bg-clinical);
+  border: 1px solid var(--border-clinical);
+  border-radius: 24px;
+  padding: 2px 3px;
+  gap: 2px;
+}
+
+.theme-btn {
+  background: transparent;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  padding: 4px 9px;
+  border-radius: 18px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.theme-btn:hover {
+  color: var(--text-primary);
+}
+
+.theme-btn.active {
+  background: var(--card-clinical);
+  color: var(--cyan-clinical);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--border-clinical);
+}
+
+[data-theme="emergency"] .theme-btn.active {
+  color: #EF4444;
+  border-color: #EF4444;
 }
 
 .telemetry-left {
@@ -93,7 +191,7 @@
    ========================================================================== */
 .stage-card {
   width: 100%;
-  background: #FFFFFF;
+  background: var(--card-clinical);
   border: 1.5px solid var(--border-clinical);
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(10, 37, 64, 0.05);
@@ -130,7 +228,7 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: #FFFFFF;
+  background: var(--card-clinical);
   border: none;
   cursor: pointer;
   position: relative;
@@ -204,7 +302,7 @@
 .intake-prompt-bubble {
   width: 100%;
   max-width: 540px;
-  background: #F4F9FD;
+  background: var(--bubble-bg);
   border: 1px solid rgba(0, 168, 232, 0.3);
   border-radius: 8px;
   padding: 8px 18px;
@@ -223,7 +321,7 @@
 .volume-meter-track {
   width: 22px;
   height: 74px;
-  background: #F1F5F9;
+  background: var(--track-bg);
   border: 1px solid var(--border-clinical);
   border-radius: 4px;
   padding: 2px;
@@ -783,8 +881,8 @@
   width: 170px;
   height: 170px;
   border-radius: 50%;
-  background: #FFFFFF;
-  border: 2px solid #BAE6FD;
+  background: var(--card-clinical);
+  border: 2px solid var(--cyan-clinical);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -801,7 +899,7 @@
   width: 140px;
   height: 140px;
   border-radius: 50%;
-  border: 1.5px solid #00A8E8;
+  border: 1.5px solid var(--cyan-clinical);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -855,15 +953,15 @@
 }
 
 .circle-badge.cyan {
-  background: #EBF8FE;
-  border: 2px solid #00A8E8;
+  background: var(--badge-cyan-bg);
+  border: 2px solid var(--cyan-clinical);
   color: var(--cyan-clinical);
 }
 
 .circle-badge.amber {
-  background: #FEF3C7;
-  border: 2px solid #F59E0B;
-  color: #D97706;
+  background: var(--badge-amber-bg);
+  border: 2px solid var(--amber-swap);
+  color: var(--amber-swap);
 }
 
 .stat-meta {
@@ -885,7 +983,7 @@
 .fatigue-progress-track {
   width: 100%;
   height: 6px;
-  background: #F1F5F9;
+  background: var(--track-bg);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -906,8 +1004,8 @@
 
 .stage-3-header-strip {
   width: 100%;
-  background: #FFF5F5;
-  border-bottom: 1px solid #FEE2E2;
+  background: var(--header-strip-bg);
+  border-bottom: 1px solid var(--header-strip-border);
   padding: 8px 18px;
   display: flex;
   align-items: center;
@@ -969,7 +1067,7 @@
   grid-template-columns: 110px 1fr;
   font-size: 11px;
   line-height: 1.4;
-  border-bottom: 1px solid #F1F5F9;
+  border-bottom: 1px solid var(--border-clinical);
   padding-bottom: 4px;
 }
 
@@ -1003,7 +1101,7 @@
 
 .qr-wrapper {
   padding: 6px;
-  background: #FFFFFF;
+  background: var(--card-clinical);
   border: 1px solid var(--border-clinical);
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -1020,7 +1118,7 @@
    ========================================================================== */
 .cockpit-footer-controls {
   width: 100%;
-  background: #FFFFFF;
+  background: var(--card-clinical);
   border: 1px solid var(--border-clinical);
   border-radius: 12px;
   padding: 14px 20px;
@@ -1044,7 +1142,7 @@
   font-weight: 700;
   cursor: pointer;
   border: 1px solid var(--border-clinical);
-  background: #F8FAFC;
+  background: var(--chip-bg);
   color: var(--navy-dark);
   transition: all 0.15s ease;
 }
@@ -1076,7 +1174,7 @@
 
 .companion-quick-input {
   flex: 1;
-  background: #F8FAFC;
+  background: var(--input-bg);
   border: 1px solid var(--border-clinical);
   border-radius: 8px;
   padding: 8px 14px;

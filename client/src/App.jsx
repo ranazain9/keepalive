@@ -79,6 +79,15 @@ export default function App() {
   });
 
   // Local state for UI controls
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('keepalive_theme') || 'clinical';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('keepalive_theme', theme);
+  }, [theme]);
+
   const [is911Active, setIs911Active] = useState(false);
   const [activeTakeStep, setActiveTakeStep] = useState(0);
   const [autoDemoRunning, setAutoDemoRunning] = useState(false);
@@ -313,6 +322,8 @@ export default function App() {
       <TopTelemetryBar
         cadStatus={cadInfo.status ? `${cadInfo.status} (${cadInfo.unit || 'ETA 3M'})` : 'KEEPALIVE EN ROUTE (ETA 3M)'}
         latencyMs={`${latencies?.agent1 || '0.8'}MS`}
+        theme={theme}
+        onThemeChange={setTheme}
       />
 
       {/* STAGE 1: TRIAGE / INTAKE */}

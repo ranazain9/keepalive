@@ -1,4 +1,4 @@
-:root {
+:root, [data-theme="clinical"] {
   --bg: #F0F4F8;
   --bg-gradient: radial-gradient(circle at 50% 0%, #FFFFFF 0%, #F0F4F8 100%);
   --card-bg: #FFFFFF;
@@ -18,6 +18,46 @@
   --text-cyan: #0088CC;
   --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+}
+
+[data-theme="dark"] {
+  --bg: #070D18;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #0F1D32 0%, #070D18 100%);
+  --card-bg: #0C1626;
+  --card-border: #1E2D44;
+  --navy-primary: #38BDF8;
+  --navy-dark: #F1F5F9;
+  --accent-cyan: #38BDF8;
+  --accent-cyan-light: rgba(56, 189, 248, 0.15);
+  --accent-cyan-glow: rgba(56, 189, 248, 0.4);
+  --accent-red: #F87171;
+  --accent-red-glow: rgba(248, 113, 113, 0.4);
+  --accent-green: #34D399;
+  --accent-amber: #FBBF24;
+  --text-primary: #F1F5F9;
+  --text-navy: #E2E8F0;
+  --text-muted: #94A3B8;
+  --text-cyan: #38BDF8;
+}
+
+[data-theme="emergency"] {
+  --bg: #050101;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #1E0303 0%, #050101 100%);
+  --card-bg: #0E0404;
+  --card-border: #7F1D1D;
+  --navy-primary: #F59E0B;
+  --navy-dark: #FFF1F2;
+  --accent-cyan: #F59E0B;
+  --accent-cyan-light: rgba(245, 158, 11, 0.15);
+  --accent-cyan-glow: rgba(245, 158, 11, 0.4);
+  --accent-red: #FF0033;
+  --accent-red-glow: rgba(255, 0, 51, 0.5);
+  --accent-green: #22C55E;
+  --accent-amber: #F59E0B;
+  --text-primary: #FFFFFF;
+  --text-navy: #FEE2E2;
+  --text-muted: #FCA5A5;
+  --text-cyan: #F59E0B;
 }
 
 * {
