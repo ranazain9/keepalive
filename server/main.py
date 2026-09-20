@@ -8,7 +8,7 @@ import os
 import json
 import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, Dict, Any
 import websockets
@@ -69,9 +69,23 @@ AAI_WS_URL = f"wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&mode=min_l
 
 from fastapi.staticfiles import StaticFiles
 
+# Production static assets mounting for Next-Gen React Cockpit
+if os.path.exists("client/dist"):
+    if os.path.exists("client/dist/assets"):
+        app.mount("/assets", StaticFiles(directory="client/dist/assets"), name="assets")
+    if os.path.exists("client/dist/models"):
+        app.mount("/models", StaticFiles(directory="client/dist/models"), name="models")
+    if os.path.exists("client/dist/draco"):
+        app.mount("/draco", StaticFiles(directory="client/dist/draco"), name="draco")
+    if os.path.exists("client/dist/videos"):
+        app.mount("/videos", StaticFiles(directory="client/dist/videos"), name="videos")
+    app.mount("/cockpit", StaticFiles(directory="client/dist", html=True), name="cockpit")
+
 @app.get("/")
-async def get_test_page():
-    """Serves the real-time voice testing dashboard."""
+async def get_root_page():
+    """Serves the production React Rescue Cockpit if built, else client_test.html."""
+    if os.path.exists("client/dist/index.html"):
+        return FileResponse("client/dist/index.html")
     with open("client_test.html", "r", encoding="utf-8") as f:
         return HTMLResponse(
             content=f.read(),
@@ -82,9 +96,28 @@ async def get_test_page():
             }
         )
 
-# Mount Next-Gen React + Three.js Cockpit if compiled
-if os.path.exists("client/dist"):
-    app.mount("/cockpit", StaticFiles(directory="client/dist", html=True), name="cockpit")
+@app.get("/test")
+async def get_test_page():
+    """Serves the standalone browser testing suite."""
+    with open("client_test.html", "r", encoding="utf-8") as f:
+        return HTMLResponse(
+            content=f.read(),
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
+
+@app.get("/health")
+async def root_health_check():
+    """Root health check for cloud platform load balancers (Render, AWS, GCP, K8s)."""
+    return {
+        "status": "HEALTHY",
+        "app": config.APP_NAME,
+        "version": config.VERSION,
+        "agents": ["Agent1_Triage", "Agent2_SafetyCoach", "Agent3_Companion"]
+    }
 
 # Concurrency guard: Ensures only 1 active streaming session to AssemblyAI
 _active_aai_ws = None

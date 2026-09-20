@@ -1,6 +1,26 @@
-assemblyai>=0.30.0
+# ==============================================================================
+# KeepAlive Production Requirements
+# Autonomous Real-Time Voice Emergency Resuscitation Cockpit
+# ==============================================================================
+
+# Core Web Framework & ASGI Production Server
+fastapi>=0.110.0,<1.0.0
+uvicorn[standard]>=0.28.0,<1.0.0
+gunicorn>=21.2.0
+
+# WebSocket & High-Performance Real-Time STT
 websockets>=12.0
-fastapi>=0.110.0
-uvicorn>=0.28.0
-pydantic>=2.6.0
+assemblyai>=0.30.0
+
+# Static Files & Multipart Form Support (Critical for Production SPA & Audio uploads)
+aiofiles>=23.2.1
+python-multipart>=0.0.9
+
+# Data Validation & Typed Settings Management
+pydantic>=2.6.0,<3.0.0
+pydantic-settings>=2.0.0
 python-dotenv>=1.0.0
+
+# Resilient HTTP Client Libraries
+httpx>=0.27.0
+requests>=2.31.0

@@ -159,16 +159,24 @@ export function useRescueVoice({
       const nativeSampleRate = ctx.sampleRate;
 
       // 3. Connect to FastAPI WebSocket (/ws/triage)
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsPort =
-        window.location.port === '5173' ? '8000' : window.location.port || '8000';
-      const hostIp =
-        window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
-      const host = `${hostIp}:${wsPort}`;
       const locQuery = encodeURIComponent(userLocation);
-      const ws = new WebSocket(
-        `${protocol}//${host}/ws/triage?location=${locQuery}&lat=${userLat}&lon=${userLon}`
-      );
+      let wsTargetUrl = '';
+      const customWs = import.meta.env?.VITE_WS_URL;
+
+      if (customWs) {
+        const cleanBase = customWs.replace(/\/+$/, '');
+        wsTargetUrl = `${cleanBase}/ws/triage?location=${locQuery}&lat=${userLat}&lon=${userLon}`;
+      } else {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        if (window.location.port === '5173') {
+          const hostIp = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
+          wsTargetUrl = `${protocol}//${hostIp}:8000/ws/triage?location=${locQuery}&lat=${userLat}&lon=${userLon}`;
+        } else {
+          wsTargetUrl = `${protocol}//${window.location.host}/ws/triage?location=${locQuery}&lat=${userLat}&lon=${userLon}`;
+        }
+      }
+
+      const ws = new WebSocket(wsTargetUrl);
       ws.binaryType = 'arraybuffer';
       wsRef.current = ws;
 
