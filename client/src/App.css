@@ -187,6 +187,162 @@
 }
 
 /* ==========================================================================
+   JUDGE / SILENT DEMO BAR
+   ========================================================================== */
+.judge-demo-bar {
+  width: 100%;
+  background: var(--card-clinical);
+  border: 1px solid var(--border-clinical);
+  border-left: 4px solid var(--cyan-clinical);
+  border-radius: 8px;
+  padding: 10px 16px;
+  box-shadow: 0 2px 8px rgba(10, 37, 64, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="emergency"] .judge-demo-bar {
+  border-left-color: var(--amber-swap);
+}
+
+.judge-demo-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.judge-demo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--cyan-subtle);
+  color: var(--cyan-clinical);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--cyan-clinical);
+}
+
+[data-theme="emergency"] .judge-demo-badge {
+  background: var(--badge-amber-bg);
+  color: var(--amber-swap);
+  border-color: var(--amber-swap);
+}
+
+.judge-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+  animation: pulseBlink 1.2s infinite ease-in-out;
+}
+
+.judge-demo-subtext {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.2px;
+}
+
+.judge-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.judge-pill {
+  background: var(--bg-clinical);
+  color: var(--text-primary);
+  border: 1px solid var(--border-clinical);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.judge-pill:hover {
+  background: var(--card-clinical);
+  border-color: var(--cyan-clinical);
+  color: var(--cyan-clinical);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 168, 232, 0.15);
+}
+
+.judge-pill:active {
+  transform: translateY(0);
+}
+
+.judge-pill.active {
+  background: var(--cyan-clinical);
+  color: #FFFFFF;
+  border-color: var(--cyan-clinical);
+  box-shadow: 0 0 12px rgba(0, 168, 232, 0.35);
+}
+
+.judge-pill-autorun {
+  background: linear-gradient(135deg, rgba(0, 168, 232, 0.12), rgba(16, 185, 129, 0.12));
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #059669;
+}
+
+[data-theme="dark"] .judge-pill-autorun {
+  color: #34D399;
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+[data-theme="emergency"] .judge-pill-autorun {
+  color: #F59E0B;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.judge-pill-autorun:hover {
+  border-color: #10B981;
+  color: #10B981;
+}
+
+.judge-pill-autorun.running {
+  background: #10B981;
+  color: #FFFFFF;
+  border-color: #10B981;
+  animation: autorunPulse 1.5s infinite;
+}
+
+@keyframes autorunPulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+  70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.judge-pill-reset {
+  margin-left: auto;
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border-clinical);
+}
+
+.judge-pill-reset:hover {
+  background: var(--bg-clinical);
+  color: var(--red-alert);
+  border-color: var(--red-alert);
+  box-shadow: none;
+}
+
+/* ==========================================================================
    Shared Stage Card Structure
    ========================================================================== */
 .stage-card {

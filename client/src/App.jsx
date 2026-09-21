@@ -221,11 +221,11 @@ export default function App() {
     setTimeout(() => setCompanionGlow(false), 2500);
   };
 
-  // 🎬 70s Video Take Helper Controls
+  // 🎬 Video Take & Judge Simulation Helper Controls
   const triggerTakeStep = async (stepNum, isAutoDemo = false) => {
     setActiveTakeStep(stepNum);
     if (stepNum === 1) {
-      // 0:15 Collapse / Not Breathing
+      // Step 1: Collapse / Not Breathing (Triage -> Dispatch & Step 1 instructions)
       await simulateVoice("Help! My dad just collapsed. He's not breathing.");
       if (isAutoDemo) {
         autoTakeTimeoutsRef.current.push(
@@ -240,13 +240,13 @@ export default function App() {
         );
       }
     } else if (stepNum === 2) {
-      // 0:45 Gasping doubt
-      await simulateVoice("He's gasping. Is he breathing again?");
+      // Step 2: Hands placed & ready -> triggers 110 BPM CPR pacing
+      await simulateVoice('Hands are placed on the center of his chest. Ready to compress.');
     } else if (stepNum === 3) {
-      // 1:08 Ribs crack doubt
+      // Step 3: Ribs crack doubt -> Agent 3 Groq companion responds in <=18 words
       await simulateVoice('I heard a crack in his chest. Did I break his rib?');
     } else if (stepNum === 4) {
-      // 1:14 Paramedics arrive
+      // Step 4: Paramedics arrive -> Handover & permanent lock
       await simulateVoice('The paramedics are here.');
       setTimeout(() => {
         setIsModalOpen(true);
@@ -254,7 +254,7 @@ export default function App() {
     }
   };
 
-  // Auto-play 70s live video take
+  // Auto-play live resuscitation drill
   const toggleAutoDemo = () => {
     if (autoDemoRunning) {
       autoTakeTimeoutsRef.current.forEach(clearTimeout);
@@ -270,32 +270,32 @@ export default function App() {
     // Step 1 at T=0s
     triggerTakeStep(1, true);
 
-    // Step 2 at T=22s
+    // Gasping doubt at T=20s
     autoTakeTimeoutsRef.current.push(
       setTimeout(() => {
-        if (autoDemoRunning) triggerTakeStep(2);
-      }, 22000)
+        simulateVoice("He's gasping. Is he breathing again?");
+      }, 20000)
     );
 
-    // Step 3 at T=44s
+    // Rib crack doubt at T=38s
     autoTakeTimeoutsRef.current.push(
       setTimeout(() => {
-        if (autoDemoRunning) triggerTakeStep(3);
-      }, 44000)
+        triggerTakeStep(3);
+      }, 38000)
     );
 
-    // Step 4 at T=56s
+    // Paramedics arrive at T=54s
     autoTakeTimeoutsRef.current.push(
       setTimeout(() => {
-        if (autoDemoRunning) triggerTakeStep(4);
-      }, 56000)
+        triggerTakeStep(4);
+      }, 54000)
     );
 
-    // Conclude at 70s
+    // Conclude at 68s
     autoTakeTimeoutsRef.current.push(
       setTimeout(() => {
         setAutoDemoRunning(false);
-      }, 70000)
+      }, 68000)
     );
   };
 
@@ -335,6 +335,69 @@ export default function App() {
         theme={theme}
         onThemeChange={setTheme}
       />
+
+      {/* JUDGE / SILENT DEMO BAR (One-Click Simulation for Mute / Denied Mic Environments) */}
+      <section className="judge-demo-bar" aria-label="Judge Silent Demo Simulation">
+        <div className="judge-demo-header">
+          <div className="judge-demo-badge">
+            <span className="judge-pulse-dot" />
+            JUDGE / SILENT DEMO
+          </div>
+          <span className="judge-demo-subtext">
+            No mic available? Click quick-phrases to simulate the multi-agent resuscitation flow:
+          </span>
+        </div>
+        <div className="judge-pills-row">
+          <button
+            type="button"
+            className={`judge-pill ${activeTakeStep === 1 ? 'active' : ''}`}
+            onClick={() => triggerTakeStep(1)}
+            title="Simulate: My dad collapsed, he's not breathing"
+          >
+            🚨 1. "Dad collapsed, not breathing"
+          </button>
+          <button
+            type="button"
+            className={`judge-pill ${activeTakeStep === 2 ? 'active' : ''}`}
+            onClick={() => triggerTakeStep(2)}
+            title="Simulate: Hands placed on chest, ready to compress"
+          >
+            👐 2. "Hands placed on chest, ready"
+          </button>
+          <button
+            type="button"
+            className={`judge-pill ${activeTakeStep === 3 ? 'active' : ''}`}
+            onClick={() => triggerTakeStep(3)}
+            title="Simulate: I heard a cracking rib sound"
+          >
+            🩺 3. "I heard a cracking rib sound"
+          </button>
+          <button
+            type="button"
+            className={`judge-pill ${activeTakeStep === 4 ? 'active' : ''}`}
+            onClick={() => triggerTakeStep(4)}
+            title="Simulate: The paramedics are here"
+          >
+            🚑 4. "The paramedics are here"
+          </button>
+          <button
+            type="button"
+            className={`judge-pill judge-pill-autorun ${autoDemoRunning ? 'running' : ''}`}
+            onClick={toggleAutoDemo}
+            title="Run full 70-second automated resuscitation drill"
+          >
+            {autoDemoRunning ? '⏹ Stop Auto-Run' : '▶ Auto-Run Demo (70s)'}
+          </button>
+          <button
+            type="button"
+            className="judge-pill judge-pill-reset"
+            onClick={handleManualReset}
+            title="Reset simulation to standby"
+          >
+            🔄 Reset
+          </button>
+        </div>
+      </section>
 
       {/* STAGE 1: TRIAGE / INTAKE */}
       <Stage1TriageIntake
