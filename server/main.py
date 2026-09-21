@@ -73,10 +73,6 @@ from fastapi.staticfiles import StaticFiles
 if os.path.exists("client/dist"):
     if os.path.exists("client/dist/assets"):
         app.mount("/assets", StaticFiles(directory="client/dist/assets"), name="assets")
-    if os.path.exists("client/dist/models"):
-        app.mount("/models", StaticFiles(directory="client/dist/models"), name="models")
-    if os.path.exists("client/dist/draco"):
-        app.mount("/draco", StaticFiles(directory="client/dist/draco"), name="draco")
     if os.path.exists("client/dist/videos"):
         app.mount("/videos", StaticFiles(directory="client/dist/videos"), name="videos")
     app.mount("/cockpit", StaticFiles(directory="client/dist", html=True), name="cockpit")

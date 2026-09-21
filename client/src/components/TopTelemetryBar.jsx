@@ -3,9 +3,9 @@ import React from 'react';
 /**
  * TopTelemetryBar
  * Replicates the top header pill from the clinical design mockup:
- * - Left: "LIVE CAD: KEEPALIVE EN ROUTE (ETA 3M)" with pulsing red dot
+ * - Left: "SIMULATED 911 CAD: KEEPALIVE EN ROUTE (ETA 3M)" with pulsing red dot
  * - Center: 3-Way Theme Switcher (Clinical Light, Tactical Dark HUD, High-Contrast Emergency)
- * - Right: "LATITUDE / LATENCY: 0.8MS"
+ * - Right: "LATENCY: 0.8MS"
  */
 export function TopTelemetryBar({
   cadStatus = 'KEEPALIVE EN ROUTE (ETA 3M)',
@@ -15,10 +15,10 @@ export function TopTelemetryBar({
 }) {
   return (
     <div className="top-telemetry-bar">
-      {/* Left: LIVE CAD indicator */}
+      {/* Left: Simulated 911 CAD indicator */}
       <div className="telemetry-left">
         <span className="live-cad-dot"></span>
-        <span className="live-cad-tag">LIVE CAD:</span>
+        <span className="live-cad-tag">SIMULATED 911 CAD:</span>
         <span className="live-cad-value">{cadStatus}</span>
       </div>
 
@@ -52,7 +52,7 @@ export function TopTelemetryBar({
 
       {/* Right: Telemetry / Latency */}
       <div className="telemetry-right">
-        <span className="latency-label">LATITUDE:</span>
+        <span className="latency-label">LATENCY:</span>
         <span className="latency-value">{latencyMs}</span>
       </div>
     </div>

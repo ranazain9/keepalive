@@ -225,6 +225,12 @@ py -3.13 -m unittest discover -s server/tests -p "test_*.py"
 * **CoTCCC:** *Committee on Tactical Combat Casualty Care (MARCH Trauma Hierarchy).*
 * **Federal Good Samaritan Legislation:** *42 U.S. Code § 238q (Protection for emergency bystander resuscitation).*
 
+## ⚖️ Media & Asset Attribution
+* **Clinical CPR Video:** Open clinical emergency resuscitation demonstration (`cpr_demonstration.mp4`) calibrated to 110 BPM pacing for educational bystander guidance.
+* **Icons:** [Lucide Icons](https://lucide.dev/) (ISC License).
+* **Typography:** Google Fonts (`Outfit`, `JetBrains Mono` under SIL Open Font License).
+* **Zero Proprietary 3D Assets:** All proprietary and third-party 3D models were fully purged from the repository to maintain 100% pure MIT open-source licensing integrity.
+
 ---
 
 ## 📄 License

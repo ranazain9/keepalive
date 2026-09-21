@@ -62,7 +62,9 @@ export function CADDispatchBanner({ cadInfo = {}, onLocationResolved }) {
           }}
         />
         <ShieldAlert size={15} color="#10B981" />
-        <span style={{ fontWeight: 800, color: '#10B981' }}>{cadInfo.status || '911 CAD STANDBY'}</span>
+        <span style={{ fontWeight: 800, color: '#10B981' }}>
+          {cadInfo.status ? `SIMULATED CAD: ${cadInfo.status}` : 'SIMULATED 911 CAD STANDBY'}
+        </span>
         <span style={{ color: '#94A3B8' }}>| {cadInfo.unit || 'Unit: Pending'}</span>
       </div>
 

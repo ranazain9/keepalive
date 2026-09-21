@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { CPRVideoPlayer } from './CPRVideoPlayer';
-import { Resuscitation3DScene } from './canvas/Resuscitation3DScene';
 
 /**
  * CPRPacingHero (STAGE 2: ACTIVE CPR PACING)
- * Exactly replicates user design mockup:
+ * Clinical Resuscitation Cockpit:
  * - Top Navy Ribbon: STAGE 2: ACTIVE CPR PACING (HERO) with ECG lines
- * - Left: Realistic CPR Video / 3D Manikin + Glowing Sternum Target + Vertical 2.2" Depth Gauge
+ * - Left: High-Definition Clinical CPR Video + Glowing Sternum Target + Vertical Depth Gauge (≥ 2.0")
  * - Right: Giant 110 BPM Rhythm Ring + Red Crosshairs + Live Compressions & 2-Min Swap Bar
  */
 export function CPRPacingHero({
@@ -15,8 +14,6 @@ export function CPRPacingHero({
   beatPhase = 0,
   cycleTime = 0,
 }) {
-  const [viewMode, setViewMode] = useState('video'); // 'video' default, with '3d' as alternative
-
   // Format MM:SS for 2-min cycle
   const formatCycle = (sec) => {
     const m = String(Math.floor(sec / 60)).padStart(2, '0');
@@ -27,8 +24,8 @@ export function CPRPacingHero({
   // 2-minute cycle progress (120s)
   const swapProgress = Math.min(100, ((cycleTime % 120) / 120) * 100);
 
-  // Dynamic compression depth calculation synced to beat phase
-  const depthInches = isCPRActive ? (2.0 + Math.sin(beatPhase * Math.PI) * 0.25).toFixed(1) : '2.2';
+  // Dynamic compression depth calculation synced to beat phase (Target: At least 2 inches / AHA standard)
+  const depthInches = isCPRActive ? (2.0 + Math.sin(beatPhase * Math.PI) * 0.25).toFixed(1) : '2.0';
   const depthPercent = isCPRActive ? 75 + Math.sin(beatPhase * Math.PI) * 20 : 75;
 
   return (
@@ -44,49 +41,25 @@ export function CPRPacingHero({
         </svg>
       </div>
 
-      {/* Main Split Grid: CPR Video / 3D Manikin on Left, Giant Rhythm Ring on Right */}
+      {/* Main Split Grid: CPR Video on Left, Giant Rhythm Ring on Right */}
       <div className="stage-2-grid">
-        {/* Left Column: CPR Visual Demonstration */}
+        {/* Left Column: Clinical Video Demonstration */}
         <div className="stage-col manikin-col">
           <div className="col-header-row">
-            <div className="col-header-title">
-              {viewMode === 'video' ? 'CLINICAL CPR PACING DEMO' : '3D COMPRESSING MANIKIN'}
-            </div>
-            <div className="view-mode-toggle">
-              <button
-                type="button"
-                className={`view-toggle-btn ${viewMode === 'video' ? 'active' : ''}`}
-                onClick={() => setViewMode('video')}
-                title="View High-Definition Clinical Video Demonstration"
-              >
-                📹 VIDEO
-              </button>
-              <button
-                type="button"
-                className={`view-toggle-btn ${viewMode === '3d' ? 'active' : ''}`}
-                onClick={() => setViewMode('3d')}
-                title="View Interactive 3D WebGL Canvas"
-              >
-                🧊 3D MODEL
-              </button>
-            </div>
+            <div className="col-header-title">CLINICAL CPR PACING DEMO (110 BPM)</div>
           </div>
 
           <div className="manikin-stage-split">
             {/* Annotation Bullets */}
             <div className="manikin-annotations">
-              <div className="annotation-item">• Glowing sternum target</div>
-              <div className="annotation-item">• 2.2 inch depth meter</div>
-              <div className="annotation-item">• Hand placement guide</div>
+              <div className="annotation-item">• Heel on chest center</div>
+              <div className="annotation-item">• Lock elbows straight</div>
+              <div className="annotation-item">• Target: ≥ 2.0" depth</div>
             </div>
 
-            {/* Center Visual Component: Video Player or 3D Scene */}
+            {/* Center Visual Component: Clean High-Definition Clinical Video */}
             <div className="manikin-torso-container">
-              {viewMode === 'video' ? (
-                <CPRVideoPlayer isCPRActive={isCPRActive} bpm={110} beatPhase={beatPhase} />
-              ) : (
-                <Resuscitation3DScene isCPRActive={isCPRActive} beatPhase={beatPhase} />
-              )}
+              <CPRVideoPlayer isCPRActive={isCPRActive} bpm={110} beatPhase={beatPhase} />
             </div>
 
             {/* Vertical Graduated Depth Gauge */}
@@ -94,14 +67,15 @@ export function CPRPacingHero({
               <div className="depth-readout">
                 <span className="depth-label">DEPTH</span>
                 <span className="depth-value">{depthInches}"</span>
+                <span style={{ fontSize: '9px', color: 'var(--text-muted)', display: 'block' }}>≥ 2.0"</span>
               </div>
 
               <div className="depth-graduated-track">
                 {/* Scale markings */}
                 <div className="depth-ticks">
-                  <span style={{ top: '0%' }}>2.0"</span>
-                  <span style={{ top: '25%' }}>1.5"</span>
-                  <span style={{ top: '65%' }}>0.5"</span>
+                  <span style={{ top: '0%' }}>2.4"</span>
+                  <span style={{ top: '25%' }}>2.0"</span>
+                  <span style={{ top: '65%' }}>1.0"</span>
                   <span style={{ top: '92%' }}>0"</span>
                 </div>
 
@@ -123,7 +97,7 @@ export function CPRPacingHero({
         {/* Right Column: Giant 110 BPM Rhythm Ring */}
         <div className="stage-col rhythm-col">
           <div className="col-header-title">GIANT 110 BPM RHYTHM RING</div>
-          <div className="col-header-sub">• Pulsing 110 BPM ring</div>
+          <div className="col-header-sub">• Pulsing 110 BPM ring synced to audio clicks</div>
 
           {/* Giant Rhythm Ring Centerpiece */}
           <div className="rhythm-ring-centerpiece">
@@ -143,34 +117,28 @@ export function CPRPacingHero({
             </div>
           </div>
 
-          {/* Bottom Counters: Live Compressions & 2-Min Swap Ring */}
+          {/* Rhythm Bottom Counters */}
           <div className="rhythm-stats-row">
-            {/* Real-time Compression Count */}
+            {/* Left Stat: Live Compressions Counter */}
             <div className="rhythm-stat-card">
-              <div className="circle-badge cyan">{compressionCount || 128}</div>
+              <div className="circle-badge cyan">{compressionCount}</div>
               <div className="stat-meta">
-                <div className="stat-name">• Real-time compression count</div>
-                <svg viewBox="0 0 160 20" className="live-cyan-ecg">
-                  <path
-                    d="M0,10 L30,10 L38,3 L46,17 L54,10 L80,10 L88,3 L96,17 L104,10 L160,10"
-                    fill="none"
-                    stroke="#00A8E8"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                  />
+                <div className="stat-name">LIVE COMPRESSIONS</div>
+                <svg viewBox="0 0 80 12" className="live-cyan-ecg" fill="none">
+                  <path d="M0,6 L20,6 L24,1 L28,11 L32,4 L36,8 L40,6 L80,6" stroke="#00A8E8" strokeWidth="1.5" />
                 </svg>
               </div>
             </div>
 
-            {/* 2-Min Fatigue Swap Ring */}
+            {/* Right Stat: 2-Minute Rescuer Fatigue Swap Countdown */}
             <div className="rhythm-stat-card">
-              <div className="circle-badge amber">{formatCycle(cycleTime) || '01:42'}</div>
+              <div className="circle-badge amber">{formatCycle(cycleTime)}</div>
               <div className="stat-meta">
-                <div className="stat-name">• 2-Min Fatigue Swap Ring</div>
+                <div className="stat-name">RESCUER FATIGUE (2 MIN SWAP)</div>
                 <div className="fatigue-progress-track">
                   <div
                     className="fatigue-progress-fill"
-                    style={{ width: `${swapProgress || 65}%` }}
+                    style={{ width: `${swapProgress}%` }}
                   ></div>
                 </div>
               </div>
