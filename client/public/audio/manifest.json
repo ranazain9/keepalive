@@ -1,4 +1,22 @@
 {
+ "spec": {
+  "engine": "elevenlabs",
+  "voice_id": "EXAVITQu4vr4xnSDxMaL",
+  "model_id": "eleven_flash_v2_5",
+  "voice_settings": {
+   "stability": 0.75,
+   "similarity_boost": 0.75,
+   "style": 0.0,
+   "use_speaker_boost": true,
+   "speed": 0.95
+  },
+  "lufs": -14.0,
+  "true_peak_dbtp": -1.0,
+  "sample_rate": 48000,
+  "channels": 1,
+  "format": "opus_64k",
+  "generated_at": "2026-09-20T22:14:29Z"
+ },
  "voice": "Sarah (ElevenLabs Flash v2.5)",
  "format": "opus 64 kbps mono 48 kHz",
  "loudness": "-14 LUFS",
