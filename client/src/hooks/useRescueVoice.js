@@ -90,6 +90,7 @@ export function useRescueVoice({
   const processorRef = useRef(null);
   const speechStartTimeRef = useRef(null);
   const isListeningRef = useRef(false);
+  const isAAIStreamingRef = useRef(false);
   const onTriageUpdateRef = useRef(onTriageUpdate);
   onTriageUpdateRef.current = onTriageUpdate;
   const onTranscriptUpdateRef = useRef(onTranscriptUpdate);
@@ -193,9 +194,11 @@ export function useRescueVoice({
           const data = JSON.parse(event.data);
           if (data.error) {
             setError(data.error);
+            isAAIStreamingRef.current = false;
             console.warn('Voice agent warning from server:', data.error);
             return;
           }
+          isAAIStreamingRef.current = true;
           const isSpeaking = Boolean(window.__keepalive_isSpeaking);
           const recentlySpoke = (Date.now() - (window.__keepalive_lastSpeechEndTime || 0)) < 1200;
           const spokenDirective = window.__keepalive_lastSpokenDirectiveText || '';
@@ -247,10 +250,12 @@ export function useRescueVoice({
 
       ws.onerror = (err) => {
         console.warn('WebSocket stream warning:', err);
+        isAAIStreamingRef.current = false;
       };
 
       ws.onclose = () => {
         console.log('WebSocket closed');
+        isAAIStreamingRef.current = false;
         wsRef.current = null;
         if (isListeningRef.current) {
           console.log('🔄 Auto-reconnecting rescue voice WebSocket...');
@@ -295,35 +300,26 @@ export function useRescueVoice({
               setTranscript(localText);
               if (onTranscriptUpdateRef.current) onTranscriptUpdateRef.current(localText);
 
-              // When client detects final speech turn:
-              // Immediately dispatch so metronome audio never delays turn response
-              if (isFinalResult) {
-                if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                  console.log('⚡ Client recognized final turn, dispatching FALLBACK_SPEECH:', localText);
-                  try {
-                    wsRef.current.send(JSON.stringify({ type: 'FALLBACK_SPEECH', text: localText }));
-                  } catch (e) {
-                    console.warn('WS send error:', e);
-                  }
-                } else {
-                  console.log('⚡ Using HTTP fallback to /api/triage:', localText);
-                  try {
-                    const res = await fetch('/api/triage', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        text: localText,
-                        location: userLocation,
-                        lat: userLat,
-                        lon: userLon,
-                      }),
-                    });
-                    const triageData = await res.json();
-                    triageData.is_final = true;
-                    if (onTriageUpdateRef.current) onTriageUpdateRef.current(triageData);
-                  } catch (e) {
-                    console.warn('Fallback triage error:', e);
-                  }
+              // If AssemblyAI is not actively streaming or WS disconnected, seamlessly dispatch to /api/triage
+              const isAAIOffline = !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN || !isAAIStreamingRef.current;
+              if (isFinalResult && isAAIOffline) {
+                console.log('⚡ Using client speech fallback to /api/triage:', localText);
+                try {
+                  const res = await fetch('/api/triage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      text: localText,
+                      location: userLocation,
+                      lat: userLat,
+                      lon: userLon,
+                    }),
+                  });
+                  const triageData = await res.json();
+                  triageData.is_final = true;
+                  if (onTriageUpdateRef.current) onTriageUpdateRef.current(triageData);
+                } catch (e) {
+                  console.warn('Fallback triage error:', e);
                 }
               }
             }
@@ -334,9 +330,9 @@ export function useRescueVoice({
         }
       }
 
-      // 5. Audio Pipeline: stream mic -> processor (2048 samples = ~42ms) -> 16kHz PCM downsampler -> WebSocket
+      // 5. Audio Pipeline: stream mic -> processor (4096 samples = ~85-93ms) -> 16kHz PCM downsampler -> WebSocket
       const source = ctx.createMediaStreamSource(stream);
-      const processor = ctx.createScriptProcessor(2048, 1, 1);
+      const processor = ctx.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
 
       const silentSink = ctx.createGain();
@@ -346,6 +342,8 @@ export function useRescueVoice({
       processor.connect(silentSink);
       silentSink.connect(ctx.destination);
 
+      let pcmBuffer = [];
+
       processor.onaudioprocess = (e) => {
         const isSpeaking = window.__keepalive_isSpeaking;
         const lastEndTime = window.__keepalive_lastSpeechEndTime || 0;
@@ -353,6 +351,7 @@ export function useRescueVoice({
         // Acoustic Gating: Mute mic packets while agent voice speaks through loudspeaker
         if (isSpeaking || Date.now() - lastEndTime < 350) {
           setRmsEnergy(0);
+          pcmBuffer = [];
           return;
         }
 
@@ -365,10 +364,19 @@ export function useRescueVoice({
         const rms = Math.sqrt(sumSquares / inputData.length);
         setRmsEnergy(rms);
 
-        // Resample to 16,000 Hz Int16 PCM and stream to AssemblyAI
+        // Resample to 16,000 Hz Int16 PCM and buffer to 100ms packets (AssemblyAI requirement: 50ms - 1000ms)
         const pcm16 = downsampleBufferTo16k(inputData, nativeSampleRate);
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          wsRef.current.send(pcm16.buffer);
+        for (let i = 0; i < pcm16.length; i++) {
+          pcmBuffer.push(pcm16[i]);
+        }
+
+        // 1600 samples at 16kHz = exactly 100ms of audio
+        if (pcmBuffer.length >= 1600) {
+          const chunk = new Int16Array(pcmBuffer);
+          pcmBuffer = [];
+          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(chunk.buffer);
+          }
         }
       };
 

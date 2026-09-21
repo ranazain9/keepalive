@@ -13,7 +13,6 @@ export function CPRVideoPlayer({
   isCPRActive = false,
   bpm = 110,
   beatPhase = 0,
-  onStartCPR = null,
 }) {
   const videoRef = useRef(null);
 
@@ -76,19 +75,14 @@ export function CPRVideoPlayer({
         <span className="reticle-label">STERNUM TARGET</span>
       </div>
 
-      {/* Standby Watermark when Paused - Clickable Action Button */}
+      {/* Standby Watermark when Paused */}
       {!isCPRActive && (
-        <div
-          className="cpr-standby-overlay"
-          onClick={onStartCPR}
-          style={{ cursor: onStartCPR ? 'pointer' : 'default' }}
-          title="Click to activate 110 BPM CPR Cadence immediately"
-        >
-          <div className="cpr-standby-pill" style={{ pointerEvents: 'auto' }}>
+        <div className="cpr-standby-overlay">
+          <div className="cpr-standby-pill">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
               <path d="M8 5v14l11-7z" />
             </svg>
-            <span>START 110 BPM CPR</span>
+            <span>READY FOR COMPRESSIONS</span>
           </div>
         </div>
       )}

@@ -119,6 +119,8 @@ class SafetyCoachAgent:
         """
         Check if user voice indicates readiness to advance or if paramedics arrived.
         """
+        if not transcript or not transcript.strip():
+            return None
         lowered = transcript.lower().strip()
         
         # 1. Paramedic Arrival Check
@@ -131,11 +133,12 @@ class SafetyCoachAgent:
 
         advance_triggers = [
             "done", "ready", "okay", "ok", "next", "i did it", "got it", "placed",
-            "start", "started", "starting", "push", "pushing", "cpr", "begin", "go",
-            "compress", "compressing", "compressions", "pumping", "pump"
+            "flat", "floor", "ground", "back", "hands", "chest", "start", "cpr", "push"
         ]
         words = set(re.findall(r"\b[a-z']+\b", lowered))
-        if any(trigger in words for trigger in advance_triggers) or any(phrase in lowered for phrase in ["i did it", "got it", "hands placed", "ready to compress"]):
+        if any(trigger in words for trigger in advance_triggers) or any(phrase in lowered for phrase in [
+            "i did it", "got it", "hands placed", "ready to compress", "on the floor", "on his back", "what now"
+        ]):
             return self.advance_step()
             
         return None

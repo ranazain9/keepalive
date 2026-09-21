@@ -207,7 +207,7 @@ async def websocket_triage_endpoint(client_ws: WebSocket):
         try:
             logger.info("⚡ Connected to AssemblyAI v3 Streaming WebSocket")
             
-            # 1. Forward raw PCM audio bytes (or client text) directly
+            # 1. Forward raw PCM audio bytes (or client text events) directly
             async def forward_audio():
                 try:
                     while True:
@@ -217,31 +217,30 @@ async def websocket_triage_endpoint(client_ws: WebSocket):
                         elif "text" in msg and msg["text"]:
                             try:
                                 payload = json.loads(msg["text"])
-                                if payload.get("type") == "FALLBACK_SPEECH":
-                                    txt = payload.get("text", "").strip()
-                                    if txt:
-                                        res = await asyncio.to_thread(
-                                            process_rescue_utterance,
-                                            txt,
-                                            location=client_location,
-                                            lat=client_lat,
-                                            lon=client_lon
-                                        )
-                                        await client_ws.send_json({
-                                            "type": "TRIAGE_UPDATE",
-                                            "is_final": True,
-                                            "transcript": txt,
-                                            "triage": res["triage"].model_dump(),
-                                            "directive": res["directive"].model_dump() if res["directive"] else None,
-                                            "companion_answer": res["companion_answer"],
-                                            "cad_dispatch": res["cad_dispatch"],
-                                            "aed_info": res["aed_info"],
-                                            "handoff_card": res["handoff_card"].model_dump() if res["handoff_card"] else None,
-                                            "agent_1_status": res["agent_1_status"],
-                                            "agent_2_status": res["agent_2_status"],
-                                            "agent_3_status": res["agent_3_status"],
-                                            "companion_model": res["companion_model"]
-                                        })
+                                txt = payload.get("text", "").strip()
+                                if txt:
+                                    res = await asyncio.to_thread(
+                                        process_rescue_utterance,
+                                        txt,
+                                        location=client_location,
+                                        lat=client_lat,
+                                        lon=client_lon
+                                    )
+                                    await client_ws.send_json({
+                                        "type": "TRIAGE_UPDATE",
+                                        "is_final": True,
+                                        "transcript": txt,
+                                        "triage": res["triage"].model_dump(),
+                                        "directive": res["directive"].model_dump() if res["directive"] else None,
+                                        "companion_answer": res["companion_answer"],
+                                        "cad_dispatch": res["cad_dispatch"],
+                                        "aed_info": res["aed_info"],
+                                        "handoff_card": res["handoff_card"].model_dump() if res["handoff_card"] else None,
+                                        "agent_1_status": res["agent_1_status"],
+                                        "agent_2_status": res["agent_2_status"],
+                                        "agent_3_status": res["agent_3_status"],
+                                        "companion_model": res["companion_model"]
+                                    })
                             except Exception as pe:
                                 logger.warning(f"Client text parse error: {pe}")
                 except WebSocketDisconnect:
@@ -258,6 +257,12 @@ async def websocket_triage_endpoint(client_ws: WebSocket):
                         
                         if msg_type not in ["Begin", "Heartbeat"]:
                             logger.info(f"⚡ [AAI v3 Event] type={msg_type} keys={list(msg_data.keys())}")
+                        
+                        if msg_type == "Error":
+                            err_msg = msg_data.get("error", "AssemblyAI streaming error")
+                            logger.error(f"❌ [AAI Error {msg_data.get('error_code')}]: {err_msg}")
+                            await client_ws.send_json({"error": err_msg})
+                            break
                         
                         transcript_text = ""
                         is_final = False
@@ -301,34 +306,16 @@ async def websocket_triage_endpoint(client_ws: WebSocket):
                                     # Fast advance for Step 1 -> Step 2 -> Step 3
                                     has_advance_signal = any(w in lowered_t.split() for w in [
                                         "ready", "done", "placed", "next", "ok", "okay",
-                                        "start", "started", "push", "cpr", "go", "begin", "compress"
-                                    ]) or any(p in lowered_t for p in ["hands placed", "ready to compress", "start cpr"])
+                                        "flat", "floor", "ground", "back", "hands", "chest"
+                                    ])
                                     if has_advance_signal:
                                         logger.info(f"⚡ [Safety Coach Fast Reflex on Interim]: '{transcript_text}'")
                                         is_final = True
                                     else:
                                         continue
                                 else:
-                                    # During active CPR:
-                                    # 110 BPM metronome clicks (every 545ms) prevent AssemblyAI cloud from seeing 800ms silence.
-                                    # Fast Reflex for Panic FAQs, Questions, and Paramedic Arrival directly on Interims!
-                                    is_cpr_panic_or_question = any(q in lowered_t for q in [
-                                        "rib", "crack", "pop", "break", "broke",
-                                        "sued", "legal", "liability",
-                                        "vomit", "throw up", "chok",
-                                        "never", "don't know", "dont know", "untrained",
-                                        "tired", "exhaust", "burn", "swap", "fatigue",
-                                        "gasp", "breath", "noise", "sound", "alive", "dead",
-                                        "ambulance", "paramedic", "ems", "medic", "eta", "where",
-                                        "they are here", "help is here", "arrived", "on scene",
-                                        "stop", "can i stop", "how long"
-                                    ]) or ("?" in transcript_text)
-
-                                    if is_cpr_panic_or_question and len(transcript_text.split()) >= 3:
-                                        logger.info(f"⚡ [Agent #3 CPR Fast Reflex on Interim]: '{transcript_text}'")
-                                        is_final = True
-                                    else:
-                                        continue
+                                    # During active CPR, stream partials cleanly; turn completion triggers Agent #3 response
+                                    continue
 
                             # 2. Final speech turn: Rescuer completed utterance -> Execute coordinated multi-agent pipeline
                             logger.info(f"🗣️ Transcribed [Turn Final]: \"{transcript_text}\"")

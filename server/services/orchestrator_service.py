@@ -122,7 +122,8 @@ class RescueOrchestrator:
                 "agent_2_status": "PARAMEDICS_ARRIVED_LOCKED",
                 "agent_3_status": "INCIDENT_CONCLUDED",
                 "companion_model": "Groq LPU (qwen/qwen3.8-27b)" if os.getenv("GROQ_API_KEY") else "Deterministic Reflex",
-                "reset_after_ans": True
+                "reset_after_ans": False,
+                "system_locked": True
             }
 
         # 1. Agent #1: Triage Classification with location awareness

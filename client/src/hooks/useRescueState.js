@@ -362,13 +362,13 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
         }
       }
 
-      // 5. EMS Paramedic Handover Lockdown & Auto-Reset after Answer
+      // 5. EMS Paramedic Handover Lockdown & Permanent System Lock after Answer
       if (
         data.agent_2_status === 'PARAMEDICS_ARRIVED_LOCKED' ||
         data.agent_3_status === 'INCIDENT_CONCLUDED' ||
         data.handoff_card ||
         data.paramedics_arrived ||
-        data.reset_after_ans
+        data.system_locked
       ) {
         setIsParamedicLocked(true);
         if (onStopCPR) onStopCPR();
@@ -385,20 +385,15 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
           'The paramedics are in charge now. Step back and take a deep breath. You did everything right.';
         setDirective(finalSpeech);
 
-        // Deliver concluding answer, then automatically reset the agent state after answer
+        // Deliver concluding answer, then permanently LOCK THE SYSTEM once speech completes!
         speakCompanion(finalSpeech, () => {
-          console.log('EMS handoff answer concluded. Auto-resetting agent state.');
-          setTimeout(() => {
-            resetSession();
-          }, 4000);
+          console.log('🔒 Paramedic concluding response completed. System is locked in EMS handoff mode.');
+          setIsParamedicLocked(true);
+          setAgent1Status('CLOSED_HANDED_OFF');
+          setAgent2Status('PARAMEDICS_ARRIVED_LOCKED');
+          setAgent3Status('INCIDENT_CONCLUDED');
+          setDirective('🔒 SYSTEM LOCKED: Paramedics are in charge. You did everything right.');
         });
-
-        // Backup safeguard to reset agent state after answer even if voice synthesis is disabled/blocked
-        setTimeout(() => {
-          if (!window.__keepalive_isSpeaking) {
-            resetSession();
-          }
-        }, 9000);
       }
     },
     [onStartCPR, onStopCPR, speakCompanion, speakDirective, enqueueSpeech, resetSession]

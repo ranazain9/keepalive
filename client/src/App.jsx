@@ -99,6 +99,15 @@ export default function App() {
   const autoTakeTimeoutsRef = useRef([]);
   const liveRunClockIntervalRef = useRef(null);
 
+  // Lock system cleanly when paramedics arrive and speech completes
+  useEffect(() => {
+    if (isParamedicLocked) {
+      console.log('🔒 System locked in EMS handoff mode.');
+      stopListening();
+      setIsModalOpen(true);
+    }
+  }, [isParamedicLocked, stopListening]);
+
   // 1. Initial Page Load: Auto-reset backend state and reverse-geocode geolocation
   useEffect(() => {
     resetSession();
@@ -315,7 +324,13 @@ export default function App() {
     <div className="cockpit-container">
       {/* Top Telemetry Header: LIVE CAD: KEEPALIVE EN ROUTE (ETA 3M) | LATITUDE: 0.8MS */}
       <TopTelemetryBar
-        cadStatus={cadInfo.status ? `${cadInfo.status} (${cadInfo.unit || 'ETA 3M'})` : 'KEEPALIVE EN ROUTE (ETA 3M)'}
+        cadStatus={
+          isParamedicLocked
+            ? '🔒 SYSTEM LOCKED: EMS ON SCENE'
+            : cadInfo.status
+            ? `${cadInfo.status} (${cadInfo.unit || 'ETA 3M'})`
+            : 'KEEPALIVE EN ROUTE (ETA 3M)'
+        }
         latencyMs={`${latencies?.agent1 || '0.8'}MS`}
         theme={theme}
         onThemeChange={setTheme}
@@ -329,7 +344,7 @@ export default function App() {
         rmsEnergy={rmsEnergy}
         wpm={wpm}
         directive={directive}
-        onStartCPR={startCPR}
+        isParamedicLocked={isParamedicLocked}
       />
 
       {/* STAGE 2: ACTIVE CPR PACING (HERO) */}
@@ -338,7 +353,6 @@ export default function App() {
         compressionCount={compressionCount}
         beatPhase={beatPhase}
         cycleTime={cycleTime}
-        onStartCPR={startCPR}
       />
 
       {/* AGENT #3: CLINICAL COMPANION BEDSIDE GUIDANCE */}

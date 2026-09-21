@@ -60,7 +60,7 @@ export function CPRPacingHero({
 
             {/* Center Visual Component: Clean High-Definition Clinical Video */}
             <div className="manikin-torso-container">
-              <CPRVideoPlayer isCPRActive={isCPRActive} bpm={110} beatPhase={beatPhase} onStartCPR={onStartCPR} />
+              <CPRVideoPlayer isCPRActive={isCPRActive} bpm={110} beatPhase={beatPhase} />
             </div>
 
             {/* Vertical Graduated Depth Gauge */}
@@ -101,12 +101,7 @@ export function CPRPacingHero({
           <div className="col-header-sub">• Pulsing 110 BPM ring synced to audio clicks</div>
 
           {/* Giant Rhythm Ring Centerpiece */}
-          <div
-            className="rhythm-ring-centerpiece"
-            onClick={!isCPRActive && onStartCPR ? onStartCPR : undefined}
-            style={{ cursor: !isCPRActive && onStartCPR ? 'pointer' : 'default' }}
-            title={!isCPRActive ? 'Click to Start 110 BPM CPR' : '110 BPM Metronome Active'}
-          >
+          <div className="rhythm-ring-centerpiece">
             {/* Red Crosshair Lines */}
             <div className="crosshair-line horizontal"></div>
             <div className="crosshair-line vertical"></div>

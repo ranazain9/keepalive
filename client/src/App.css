@@ -301,20 +301,76 @@
 
 .intake-prompt-bubble {
   width: 100%;
-  max-width: 540px;
+  max-width: 560px;
+  min-height: 48px;
   background: var(--bubble-bg);
-  border: 1px solid rgba(0, 168, 232, 0.3);
+  border: 1px solid rgba(0, 168, 232, 0.38);
   border-radius: 8px;
-  padding: 8px 18px;
+  padding: 10px 20px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3), 0 0 16px rgba(0, 168, 232, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  cursor: default;
+  pointer-events: none;
+  user-select: none;
 }
 
 .intake-prompt-bubble .prompt-text {
-  font-size: 16px;
-  font-weight: 700;
-  font-style: italic;
-  color: var(--cyan-clinical);
+  font-size: 15px;
+  line-height: 1.4;
   letter-spacing: 0.2px;
+  font-family: 'Outfit', sans-serif;
+  text-align: center;
+}
+
+.intake-prompt-bubble .prompt-text.caller-speech {
+  color: #38BDF8;
+  font-style: italic;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.speech-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #38BDF8;
+  box-shadow: 0 0 8px #38BDF8;
+  animation: pulse-dot 1.1s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+}
+
+.intake-prompt-bubble .prompt-text.coach-directive {
+  color: #00E5FF;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+}
+
+.directive-shield {
+  font-style: normal;
+  margin-right: 4px;
+}
+
+.intake-prompt-bubble .prompt-text.standby-hint {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--cyan-clinical);
+  opacity: 0.88;
+}
+
+[data-theme='clinical'] .intake-prompt-bubble .prompt-text.coach-directive {
+  color: #0284C7;
+  text-shadow: none;
 }
 
 /* Right Volume Meter */
