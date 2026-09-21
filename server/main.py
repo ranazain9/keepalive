@@ -75,6 +75,9 @@ if os.path.exists("client/dist"):
         app.mount("/assets", StaticFiles(directory="client/dist/assets"), name="assets")
     if os.path.exists("client/dist/videos"):
         app.mount("/videos", StaticFiles(directory="client/dist/videos"), name="videos")
+    # Pre-recorded protocol voice: static clips, no TTS service involved.
+    if os.path.exists("client/dist/audio"):
+        app.mount("/audio", StaticFiles(directory="client/dist/audio"), name="audio")
     app.mount("/cockpit", StaticFiles(directory="client/dist", html=True), name="cockpit")
 
 @app.get("/")

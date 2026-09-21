@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { loadClipVoice, resolveClipId, playClip, hasClips } from '../audio/clipVoice';
 
 /**
  * useRescueState
@@ -38,6 +39,68 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
   const lastSpokenDirectiveTextRef = useRef('');
   const activeUtteranceRef = useRef(null);
   const audioCtxRef = useRef(null);
+  const clipChainRef = useRef(Promise.resolve());
+
+  const ensureAudioContext = useCallback(() => {
+    if (!audioCtxRef.current) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      audioCtxRef.current = new AudioCtx();
+      // iOS mutes Web Audio in silent mode unless the session is playback.
+      try {
+        if (navigator.audioSession) navigator.audioSession.type = 'playback';
+      } catch (e) {}
+      loadClipVoice(audioCtxRef.current);
+    }
+    if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
+    return audioCtxRef.current;
+  }, []);
+
+  /**
+   * Speak a line with the recorded human voice.
+   * Returns true if a clip took it, false to let speech synthesis handle it.
+   * Lines never overlap: each waits for the previous one, then a 250 ms gap
+   * while the metronome stays ducked.
+   */
+  const speakWithClip = useCallback(
+    (text, options = {}, onEnd = null, fallback = null) => {
+      ensureAudioContext();
+      if (!hasClips()) return false;
+      const clipId = resolveClipId(options.assetId, text);
+      if (!clipId) return false;
+
+      lastSpokenTextRef.current = text;
+      window.__keepalive_lastSpokenText = text;
+
+      clipChainRef.current = clipChainRef.current
+        .then(() =>
+          playClip({
+            assetId: clipId,
+            text,
+            onStart: () => {
+              window.__keepalive_isSpeaking = true;
+              if (onDuckAudio) onDuckAudio(true);
+            },
+          })
+        )
+        .then((played) => {
+          // A clip that failed to decode must not leave the line unspoken.
+          if (!played && fallback) fallback();
+          return new Promise((r) => setTimeout(r, 250));
+        })
+        .then(() => {
+          window.__keepalive_isSpeaking = false;
+          if (onDuckAudio) onDuckAudio(false);
+          if (onEnd) onEnd();
+        })
+        .catch(() => {
+          window.__keepalive_isSpeaking = false;
+          if (onDuckAudio) onDuckAudio(false);
+        });
+
+      return true;
+    },
+    [ensureAudioContext, onDuckAudio]
+  );
 
   // Dual-Tone Reassuring Companion Chime (Web Audio API - exact from client_test.html)
   const playCompanionChime = useCallback(() => {
@@ -179,9 +242,19 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
   // Enqueue Speech
   const enqueueSpeech = useCallback(
     (text, isPriority = false, options = {}, onEnd = null) => {
-      if (!window.speechSynthesis || !text) return;
+      if (!text) return;
       text = text.trim();
       if (!text) return;
+
+      // Every line the engine speaks has a recorded clip, keyed by the
+      // backend's own asset_id. Only unscripted answers reach the synthesiser.
+      const synthesise = () => {
+        speechQueueRef.current.push({ text, options, onEnd });
+        processSpeechQueue();
+      };
+      if (speakWithClip(text, options, onEnd, synthesise)) return;
+
+      if (!window.speechSynthesis) return;
 
       const item = { text, options, onEnd };
       if (isPriority) {
@@ -199,13 +272,13 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
       }
       processSpeechQueue();
     },
-    [processSpeechQueue]
+    [processSpeechQueue, speakWithClip]
   );
 
   // Spoken directives & companion wrappers
   const speakDirective = useCallback(
-    (text, isPriority = false, onEnd = null) => {
-      enqueueSpeech(text, isPriority, { rate: 1.05, pitch: 1.0 }, onEnd);
+    (text, isPriority = false, onEnd = null, assetId = null) => {
+      enqueueSpeech(text, isPriority, { rate: 1.05, pitch: 1.0, assetId }, onEnd);
     },
     [enqueueSpeech]
   );
@@ -354,7 +427,12 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
           // Agent 2 MUST speak cleanly and exclusively! Agent 3 does NOT speak while Agent 2 guides.
           lastSpokenDirectiveTextRef.current = spokenDirectiveText;
           window.__keepalive_lastSpokenDirectiveText = spokenDirectiveText;
-          speakDirective(spokenDirectiveText, true);
+          speakDirective(
+            spokenDirectiveText,
+            true,
+            null,
+            typeof directive === 'object' ? directive.asset_id || directive.audio_cue : null
+          );
         } else if (companionAns) {
           // Only when Agent 2 is NOT delivering a guiding directive (during ongoing CPR):
           // Agent 3 answers caller panic questions and doubts immediately!
