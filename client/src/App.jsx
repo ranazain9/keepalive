@@ -109,15 +109,9 @@ export default function App() {
           const lon = position.coords.longitude;
           setUserCoords({ lat, lon });
           try {
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
-            );
+            const res = await fetch(`/api/geocode?lat=${lat}&lon=${lon}`);
             const data = await res.json();
-            const addr =
-              data.display_name ||
-              (data.address
-                ? `${data.address.road || ''}, ${data.address.city || data.address.town || ''}, ${data.address.country || ''}`
-                : `${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+            const addr = data.address || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
             setUserLocation(addr);
             setCadInfo((prev) => ({ ...prev, address: addr }));
           } catch (e) {

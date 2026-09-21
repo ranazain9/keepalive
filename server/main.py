@@ -115,6 +115,30 @@ async def root_health_check():
         "agents": ["Agent1_Triage", "Agent2_SafetyCoach", "Agent3_Companion"]
     }
 
+@app.get("/api/geocode")
+async def reverse_geocode(lat: float = 37.7749, lon: float = -122.4194):
+    """
+    Secure server-side reverse geocoding with standard User-Agent.
+    Eliminates browser-side HTTP 403 Forbidden errors from Nominatim.
+    """
+    url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}"
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "KeepAlive-Rescue-Agent/1.0 (emergency-cockpit@keepalive.app)"}
+    )
+    try:
+        def _fetch():
+            with urllib.request.urlopen(req, timeout=3.5) as resp:
+                return json.loads(resp.read().decode())
+        data = await asyncio.to_thread(_fetch)
+        display_name = data.get("display_name", "")
+        parts = display_name.split(",")
+        address = ", ".join(p.strip() for p in parts[:3]) if parts else display_name
+        return {"address": address or f"{lat:.4f}, {lon:.4f}", "raw": data}
+    except Exception as e:
+        logger.warning(f"Geocode lookup fallback: {e}")
+        return {"address": f"{lat:.4f}, {lon:.4f}", "error": str(e)}
+
 # Concurrency guard: Ensures only 1 active streaming session to AssemblyAI
 _active_aai_ws = None
 _aai_ws_lock = asyncio.Lock()
@@ -282,8 +306,26 @@ async def websocket_triage_endpoint(client_ws: WebSocket):
                                     else:
                                         continue
                                 else:
-                                    # During active CPR, stream partials cleanly; turn completion triggers Agent #3 response
-                                    continue
+                                    # During active CPR:
+                                    # 110 BPM metronome clicks (every 545ms) prevent AssemblyAI cloud from seeing 800ms silence.
+                                    # Fast Reflex for Panic FAQs, Questions, and Paramedic Arrival directly on Interims!
+                                    is_cpr_panic_or_question = any(q in lowered_t for q in [
+                                        "rib", "crack", "pop", "break", "broke",
+                                        "sued", "legal", "liability",
+                                        "vomit", "throw up", "chok",
+                                        "never", "don't know", "dont know", "untrained",
+                                        "tired", "exhaust", "burn", "swap", "fatigue",
+                                        "gasp", "breath", "noise", "sound", "alive", "dead",
+                                        "ambulance", "paramedic", "ems", "medic", "eta", "where",
+                                        "they are here", "help is here", "arrived", "on scene",
+                                        "stop", "can i stop", "how long"
+                                    ]) or ("?" in transcript_text)
+
+                                    if is_cpr_panic_or_question and len(transcript_text.split()) >= 3:
+                                        logger.info(f"⚡ [Agent #3 CPR Fast Reflex on Interim]: '{transcript_text}'")
+                                        is_final = True
+                                    else:
+                                        continue
 
                             # 2. Final speech turn: Rescuer completed utterance -> Execute coordinated multi-agent pipeline
                             logger.info(f"🗣️ Transcribed [Turn Final]: \"{transcript_text}\"")

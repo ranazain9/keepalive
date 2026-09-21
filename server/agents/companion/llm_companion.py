@@ -155,7 +155,7 @@ class ContextualLLMCompanion:
                         return content
             except urllib.error.HTTPError as e:
                 logger.warning(f"[Agent #3 Groq LLM] HTTP {e.code} on model {model}: {e.reason}")
-                if e.code == 401:
+                if e.code in (401, 403, 429):
                     break
                 continue
             except Exception as e:

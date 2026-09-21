@@ -89,6 +89,7 @@ export function useRescueVoice({
   const audioCtxRef = useRef(null);
   const processorRef = useRef(null);
   const speechStartTimeRef = useRef(null);
+  const isListeningRef = useRef(false);
   const onTriageUpdateRef = useRef(onTriageUpdate);
   onTriageUpdateRef.current = onTriageUpdate;
   const onTranscriptUpdateRef = useRef(onTranscriptUpdate);
@@ -96,6 +97,7 @@ export function useRescueVoice({
 
   // Stop recording and close connections cleanly
   const stopListening = useCallback(() => {
+    isListeningRef.current = false;
     if (processorRef.current) {
       try {
         processorRef.current.disconnect();
@@ -135,6 +137,7 @@ export function useRescueVoice({
     ) {
       return;
     }
+    isListeningRef.current = true;
     setError(null);
     speechStartTimeRef.current = Date.now();
 
@@ -181,7 +184,7 @@ export function useRescueVoice({
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('🎙️ Real-time Rescue WebSocket connected to', host);
+        console.log('🎙️ Real-time Rescue WebSocket connected to', wsTargetUrl);
         setIsListening(true);
       };
 
@@ -248,8 +251,17 @@ export function useRescueVoice({
 
       ws.onclose = () => {
         console.log('WebSocket closed');
-        setIsListening(false);
         wsRef.current = null;
+        if (isListeningRef.current) {
+          console.log('🔄 Auto-reconnecting rescue voice WebSocket...');
+          setTimeout(() => {
+            if (isListeningRef.current && (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED)) {
+              startListening();
+            }
+          }, 600);
+        } else {
+          setIsListening(false);
+        }
       };
 
       // 4. Client-side Speech Recognition Fallback (Automatic Instant Failover)
@@ -274,31 +286,44 @@ export function useRescueVoice({
             }
             localText = localText.trim();
             if (localText) {
+              const spokenDirective = window.__keepalive_lastSpokenDirectiveText || '';
+              const spokenCompanion = window.__keepalive_lastSpokenCompanionText || '';
+              if (isEchoOfSpeech(localText, [spokenDirective, spokenCompanion])) {
+                return;
+              }
+
               setTranscript(localText);
               if (onTranscriptUpdateRef.current) onTranscriptUpdateRef.current(localText);
 
-              // If AssemblyAI WebSocket is not connected or experienced an error, seamlessly dispatch to /api/triage
-              if (
-                isFinalResult &&
-                (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN)
-              ) {
-                console.log('⚡ Using client speech fallback to /api/triage:', localText);
-                try {
-                  const res = await fetch('/api/triage', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      text: localText,
-                      location: userLocation,
-                      lat: userLat,
-                      lon: userLon,
-                    }),
-                  });
-                  const triageData = await res.json();
-                  triageData.is_final = true;
-                  if (onTriageUpdateRef.current) onTriageUpdateRef.current(triageData);
-                } catch (e) {
-                  console.warn('Fallback triage error:', e);
+              // When client detects final speech turn:
+              // Immediately dispatch so metronome audio never delays turn response
+              if (isFinalResult) {
+                if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                  console.log('⚡ Client recognized final turn, dispatching FALLBACK_SPEECH:', localText);
+                  try {
+                    wsRef.current.send(JSON.stringify({ type: 'FALLBACK_SPEECH', text: localText }));
+                  } catch (e) {
+                    console.warn('WS send error:', e);
+                  }
+                } else {
+                  console.log('⚡ Using HTTP fallback to /api/triage:', localText);
+                  try {
+                    const res = await fetch('/api/triage', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        text: localText,
+                        location: userLocation,
+                        lat: userLat,
+                        lon: userLon,
+                      }),
+                    });
+                    const triageData = await res.json();
+                    triageData.is_final = true;
+                    if (onTriageUpdateRef.current) onTriageUpdateRef.current(triageData);
+                  } catch (e) {
+                    console.warn('Fallback triage error:', e);
+                  }
                 }
               }
             }
