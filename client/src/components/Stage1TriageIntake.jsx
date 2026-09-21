@@ -15,6 +15,7 @@ export function Stage1TriageIntake({
   rmsEnergy = 0,
   wpm = 0,
   directive = 'Tell me what happened',
+  onStartCPR = null,
 }) {
   const canvasRef = useRef(null);
 
@@ -88,11 +89,40 @@ export function Stage1TriageIntake({
         <div className="stage-1-center">
           <canvas ref={canvasRef} width={520} height={56} className="waveform-canvas" />
 
-          {/* Cyan "Tell me what happened" / Live Streaming Prompt Bubble */}
-          <div className="intake-prompt-bubble">
-            <span className="prompt-text">
-              {transcript ? `"${transcript}"` : (directive || 'Tell me what happened')}
-            </span>
+          {/* Cyan "Tell me what happened" / Live Streaming Prompt Bubble & Directives */}
+          <div className="intake-prompt-bubble" style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+            {transcript && (
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                🗣️ "{transcript}"
+              </div>
+            )}
+            <div className="prompt-text" style={{ fontWeight: 700, color: directive ? '#00E5FF' : 'inherit' }}>
+              {directive ? `🛡️ ${directive}` : (transcript ? '' : 'Tell me what happened')}
+            </div>
+            {directive && onStartCPR && (
+              <button
+                type="button"
+                onClick={onStartCPR}
+                style={{
+                  marginTop: '4px',
+                  background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                  border: '1px solid rgba(239, 68, 68, 0.6)',
+                  color: '#FFFFFF',
+                  borderRadius: '999px',
+                  padding: '4px 16px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  letterSpacing: '0.5px',
+                  boxShadow: '0 0 12px rgba(239, 68, 68, 0.4)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>▶ START 110 BPM CPR NOW</span>
+              </button>
+            )}
           </div>
         </div>
 

@@ -19,4 +19,26 @@ def make_safety_coach_router(orchestrator: RescueOrchestrator) -> APIRouter:
             "current_step": orchestrator.safety_coach.state.current_step_index + 1
         }
 
+    @router.post("/start_cpr")
+    async def force_start_cpr():
+        """Immediately activates Step 3: 110 BPM CPR pacing and metronome cadence."""
+        import time
+        from server.schemas.emergency import EmergencyIntent
+        if not orchestrator.safety_coach.state.is_locked:
+            orchestrator.safety_coach.initialize_protocol(
+                intent=EmergencyIntent.CARDIAC_ARREST,
+                confidence=1.0
+            )
+        # Advance directly to Step 3 (index 2 = compressions at 110 BPM)
+        orchestrator.safety_coach.state.current_step_index = 2
+        orchestrator.safety_coach.state.cpr_started_at = time.time()
+        orchestrator.safety_coach.state.metronome_active = True
+        orchestrator.safety_coach.state.metronome_bpm = 110
+        event = orchestrator.safety_coach.get_current_directive()
+        return {
+            "status": "CPR_STARTED",
+            "directive": event,
+            "current_step": 3
+        }
+
     return router

@@ -129,9 +129,13 @@ class SafetyCoachAgent:
         if any(neg in lowered for neg in ["never", "not done", "haven't", "havent", "don't know", "dont know"]):
             return None
 
-        advance_triggers = ["done", "ready", "okay", "ok", "next", "i did it", "got it", "placed"]
+        advance_triggers = [
+            "done", "ready", "okay", "ok", "next", "i did it", "got it", "placed",
+            "start", "started", "starting", "push", "pushing", "cpr", "begin", "go",
+            "compress", "compressing", "compressions", "pumping", "pump"
+        ]
         words = set(re.findall(r"\b[a-z']+\b", lowered))
-        if any(trigger in words for trigger in advance_triggers) or any(phrase in lowered for phrase in ["i did it", "got it"]):
+        if any(trigger in words for trigger in advance_triggers) or any(phrase in lowered for phrase in ["i did it", "got it", "hands placed", "ready to compress"]):
             return self.advance_step()
             
         return None

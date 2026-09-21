@@ -51,6 +51,7 @@ export default function App() {
     updateFromData,
     resetSession,
     advanceStep,
+    startCPR,
   } = useRescueState({
     onStartCPR: startMetronome,
     onStopCPR: stopMetronome,
@@ -328,6 +329,7 @@ export default function App() {
         rmsEnergy={rmsEnergy}
         wpm={wpm}
         directive={directive}
+        onStartCPR={startCPR}
       />
 
       {/* STAGE 2: ACTIVE CPR PACING (HERO) */}
@@ -336,6 +338,7 @@ export default function App() {
         compressionCount={compressionCount}
         beatPhase={beatPhase}
         cycleTime={cycleTime}
+        onStartCPR={startCPR}
       />
 
       {/* AGENT #3: CLINICAL COMPANION BEDSIDE GUIDANCE */}

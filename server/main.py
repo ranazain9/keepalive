@@ -299,7 +299,10 @@ async def websocket_triage_endpoint(client_ws: WebSocket):
                                         continue
                                 elif orchestrator.safety_coach.state.current_step_index < 2:
                                     # Fast advance for Step 1 -> Step 2 -> Step 3
-                                    has_advance_signal = any(w in lowered_t.split() for w in ["ready", "done", "placed", "next", "ok", "okay"])
+                                    has_advance_signal = any(w in lowered_t.split() for w in [
+                                        "ready", "done", "placed", "next", "ok", "okay",
+                                        "start", "started", "push", "cpr", "go", "begin", "compress"
+                                    ]) or any(p in lowered_t for p in ["hands placed", "ready to compress", "start cpr"])
                                     if has_advance_signal:
                                         logger.info(f"⚡ [Safety Coach Fast Reflex on Interim]: '{transcript_text}'")
                                         is_final = True

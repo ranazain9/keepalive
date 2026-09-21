@@ -448,6 +448,23 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
     }
   }, [updateFromData]);
 
+  // Immediately jump to 110 BPM CPR Pacing
+  const startCPR = useCallback(async () => {
+    try {
+      const res = await fetch('/api/safety_coach/start_cpr', { method: 'POST' });
+      const data = await res.json();
+      if (data.directive) {
+        updateFromData({
+          directive: data.directive,
+          agent_2_status: 'ACTIVE_CPR_110BPM',
+          agent_3_status: 'ACTIVE_CPR_PACING_COMPANION'
+        }, true);
+      }
+    } catch (e) {
+      console.error('Start CPR error:', e);
+    }
+  }, [updateFromData]);
+
   return {
     activeIntent,
     protocolStep,
@@ -469,5 +486,6 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
     updateFromData,
     resetSession,
     advanceStep,
+    startCPR,
   };
 }
