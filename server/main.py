@@ -22,6 +22,7 @@ from server.tools.dispatcher_tool import trigger_emergency_dispatch, find_neares
 from server.schemas.emergency import TriageAction, EmergencyIntent, PatientType
 
 from server.services.orchestrator_service import RescueOrchestrator
+from server.speak_router import SARAH, make_speak_router
 from server.api.routes import (
     make_session_router,
     make_triage_router,
@@ -55,6 +56,15 @@ app.include_router(make_triage_router(orchestrator))
 app.include_router(make_safety_coach_router(orchestrator))
 app.include_router(make_companion_router(orchestrator))
 app.include_router(make_dispatch_router())
+
+# Live companion answers in the same voice as the recorded lines. Without the
+# key the app simply keeps its clips and the browser fallback — nothing breaks.
+_elevenlabs_key = os.getenv("ELEVENLABS_API_KEY", "").strip()
+if _elevenlabs_key:
+    app.include_router(make_speak_router(api_key=_elevenlabs_key, log=logger.info, **SARAH))
+    logger.info("🔊 /speak enabled — live answers speak in the clip voice")
+else:
+    logger.info("🔊 /speak disabled (no ELEVENLABS_API_KEY) — clips + browser fallback only")
 
 import urllib.parse
 

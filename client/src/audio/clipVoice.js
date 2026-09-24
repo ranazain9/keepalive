@@ -127,6 +127,117 @@ export function preloadClips(ids) {
   ids.filter((id) => manifest.clips[id]).forEach((id) => buffer(id).catch(() => {}));
 }
 
+/**
+ * An answer nobody scripted, spoken in the same voice as the clips.
+ *
+ * POSTs the text to /speak, which runs the deterministic safety gate and
+ * streams back PCM16 at 24 kHz in the clips' voice. Chunks are scheduled on the
+ * audio clock as they arrive, so the first words start before the last ones are
+ * downloaded.
+ *
+ * Returns false — without making a sound — when /speak is not deployed, so the
+ * caller can fall back to speech synthesis. After one 404 it stops asking.
+ */
+let liveUnavailable = false;
+
+export async function speakLive(text, { protocolState = 'active', onStart, onSpokenText } = {}) {
+  if (!ctx || liveUnavailable || !text) return false;
+
+  let res;
+  try {
+    res = await fetch('/speak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, protocol_state: protocolState }),
+    });
+  } catch (e) {
+    return false;
+  }
+
+  if (res.status === 404) {
+    liveUnavailable = true;
+    return false;
+  }
+  if (!res.ok || !res.body) return false;
+
+  if (ctx.state === 'suspended') {
+    try {
+      await ctx.resume();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  const header = res.headers.get('X-Spoken-Text');
+  if (onSpokenText && header) {
+    try {
+      onSpokenText(decodeURIComponent(header));
+    } catch (e) {}
+  }
+
+  const RATE = 24000;
+  const reader = res.body.getReader();
+  const sources = [];
+  let playAt = 0;
+  let odd = null; // a sample split across two chunks
+  let started = false;
+
+  const schedule = (bytes) => {
+    let data = bytes;
+    if (odd) {
+      const joined = new Uint8Array(odd.length + bytes.length);
+      joined.set(odd, 0);
+      joined.set(bytes, odd.length);
+      data = joined;
+      odd = null;
+    }
+    if (data.length % 2) {
+      odd = data.slice(data.length - 1);
+      data = data.slice(0, data.length - 1);
+    }
+    if (!data.length) return;
+
+    const aligned = new Uint8Array(data); // fresh buffer: chunks arrive at odd offsets
+    const samples = new Int16Array(aligned.buffer);
+    const buf = ctx.createBuffer(1, samples.length, RATE);
+    const channel = buf.getChannelData(0);
+    for (let i = 0; i < samples.length; i++) channel[i] = samples[i] / 32768;
+
+    const source = ctx.createBufferSource();
+    source.buffer = buf;
+    source.connect(master);
+    // A small lead-in on the first chunk absorbs network jitter on the next ones.
+    if (!started) {
+      playAt = ctx.currentTime + 0.06;
+      started = true;
+      if (onStart) onStart();
+    }
+    source.start(playAt);
+    playAt += buf.duration;
+    sources.push(source);
+  };
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      schedule(value);
+    }
+  } catch (e) {
+    sources.forEach((s) => {
+      try {
+        s.stop();
+      } catch (err) {}
+    });
+    return started; // audible already: do not let the caller speak it twice
+  }
+
+  if (!started) return false;
+  const remaining = Math.max(0, playAt - ctx.currentTime);
+  await new Promise((r) => setTimeout(r, remaining * 1000));
+  return true;
+}
+
 export function hasClips() {
   return !!manifest && Object.keys(manifest.clips).length > 0;
 }
