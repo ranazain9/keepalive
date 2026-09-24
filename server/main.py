@@ -88,6 +88,8 @@ if os.path.exists("client/dist"):
     # Pre-recorded protocol voice: static clips, no TTS service involved.
     if os.path.exists("client/dist/audio"):
         app.mount("/audio", StaticFiles(directory="client/dist/audio"), name="audio")
+    elif os.path.exists("client/public/audio"):
+        app.mount("/audio", StaticFiles(directory="client/public/audio"), name="audio")
     app.mount("/cockpit", StaticFiles(directory="client/dist", html=True), name="cockpit")
 
 @app.get("/")

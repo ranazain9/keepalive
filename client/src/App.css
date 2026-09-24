@@ -1440,7 +1440,7 @@
   100% { transform: scale(0.95); opacity: 0.9; }
 }
 
-/* Responsive adjustments */
+/* Responsive adjustments & Mobile Rescue Experience */
 @media (max-width: 860px) {
   .stage-2-grid, .stage-3-grid {
     grid-template-columns: 1fr;
@@ -1450,5 +1450,103 @@
     border-top: 1px solid var(--border-clinical);
     padding-left: 0;
     padding-top: 14px;
+  }
+}
+
+/* Dedicated Mobile Rescue Hardening (< 768px) */
+@media (max-width: 768px) {
+  .cockpit-container {
+    padding-left: max(8px, env(safe-area-inset-left, 8px));
+    padding-right: max(8px, env(safe-area-inset-right, 8px));
+    padding-bottom: max(32px, env(safe-area-inset-bottom, 32px));
+    gap: 12px;
+  }
+
+  /* Telemetry bar mobile stacking */
+  .top-telemetry-bar {
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 14px;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  /* Judge Silent Demo Bar: smooth horizontal touch swipe on mobile */
+  .judge-demo-bar {
+    padding: 10px 12px;
+  }
+
+  .judge-demo-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .judge-pills-row {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+    gap: 8px;
+  }
+
+  .judge-pill {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    padding: 8px 12px;
+    min-height: 40px;
+  }
+
+  /* Stage 1: Triage Intake touch alignment */
+  .stage-1-body {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .intake-soundwave-canvas {
+    max-width: 100%;
+    height: 40px;
+  }
+
+  .intake-volume-column {
+    display: none; /* Hide decorative vertical volume bar on mobile to prioritize prompt readability */
+  }
+
+  /* Stage 2: Active CPR Hero rhythm ring centering */
+  .stage-col.manikin-col,
+  .stage-col.hero-pacing-ring-card {
+    padding: 12px;
+  }
+
+  .rhythm-crosshairs-circle {
+    width: 220px;
+    height: 220px;
+    max-width: 80vw;
+    max-height: 80vw;
+  }
+
+  .rhythm-count-number {
+    font-size: 3rem;
+  }
+
+  /* EMS Handover Modal & Safe-Area Inset Protection */
+  .ems-modal-content {
+    max-height: 90vh;
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
+  }
+
+  .ems-modal-footer {
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ems-modal-footer button {
+    width: 100%;
+    min-height: 44px; /* Apple minimum touch target guideline */
   }
 }

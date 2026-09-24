@@ -3,6 +3,7 @@ import './App.css';
 import { useMetronome } from './hooks/useMetronome';
 import { useRescueVoice } from './hooks/useRescueVoice';
 import { useRescueState } from './hooks/useRescueState';
+import { useWakeLock } from './hooks/useWakeLock';
 import { TopTelemetryBar } from './components/TopTelemetryBar';
 import { Stage1TriageIntake } from './components/Stage1TriageIntake';
 import { CPRPacingHero } from './components/CPRPacingHero';
@@ -98,6 +99,34 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const autoTakeTimeoutsRef = useRef([]);
   const liveRunClockIntervalRef = useRef(null);
+
+  // 5. Mobile Hardware Hardening: Screen Wake Lock during active rescue / triage
+  const isEmergencyActive = isMetronomeActive || isListening || autoDemoRunning || (directive && !isParamedicLocked);
+  useWakeLock(isEmergencyActive);
+
+  // 6. Mobile First-Gesture Audio Unlock & iOS playback session initialization
+  useEffect(() => {
+    const unlockAudio = () => {
+      try {
+        getAudioContext();
+      } catch (err) {
+        console.warn('Audio unlock on first gesture error:', err);
+      }
+      window.removeEventListener('touchstart', unlockAudio, { capture: true });
+      window.removeEventListener('pointerdown', unlockAudio, { capture: true });
+      window.removeEventListener('click', unlockAudio, { capture: true });
+    };
+
+    window.addEventListener('touchstart', unlockAudio, { capture: true, passive: true });
+    window.addEventListener('pointerdown', unlockAudio, { capture: true, passive: true });
+    window.addEventListener('click', unlockAudio, { capture: true, passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', unlockAudio, { capture: true });
+      window.removeEventListener('pointerdown', unlockAudio, { capture: true });
+      window.removeEventListener('click', unlockAudio, { capture: true });
+    };
+  }, [getAudioContext]);
 
   // Lock system cleanly when paramedics arrive and speech completes
   useEffect(() => {

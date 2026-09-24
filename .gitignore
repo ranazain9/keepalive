@@ -9,6 +9,7 @@
 *.env
 secrets.json
 api_keys.json
+PAST_CHAT_RECOVERED.md
 
 # Python bytecode & caching
 __pycache__/

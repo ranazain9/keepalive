@@ -22,6 +22,12 @@ export function useMetronome(initialBpm = 110) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       audioCtxRef.current = new AudioCtx();
     }
+    // Set iOS audioSession to playback to override hardware silent switch
+    try {
+      if ('audioSession' in navigator && navigator.audioSession) {
+        navigator.audioSession.type = 'playback';
+      }
+    } catch (e) {}
     if (audioCtxRef.current.state === 'suspended') {
       audioCtxRef.current.resume();
     }
