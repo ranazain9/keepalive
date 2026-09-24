@@ -41,66 +41,63 @@ In sudden cardiac arrest, traumatic bleeding, choking, anaphylaxis, or overdose,
 
 ```mermaid
 flowchart TD
-    subgraph USER_INPUT ["1. User in High Panic"]
-        A["🗣️ 'Help! My dad just fell in the kitchen, he is not breathing!'"]
+    A["🗣️ 'Help! My dad collapsed, he is not breathing!'"]
+
+    subgraph EARS ["1 · Ears — they never decide"]
+        B["🎙️ Mic · Web Audio · PCM16 16 kHz"]
+        C["AssemblyAI Universal-3.5 Pro<br/>streaming STT · medical term boosting"]
+        D["🔁 Echo filter: the mic stays open while we speak;<br/>transcripts matching the spoken line are dropped"]
+        B --> C --> D
     end
 
-    subgraph INGESTION ["2. Low-Latency Ingestion (<300ms)"]
-        B["🎙️ Phone Mic / Web Audio API (16kHz PCM)"]
-        C["⚡ AssemblyAI Real-Time Streaming WebSocket\n(Medical Word Boost Applied)"]
-        B --> C
+    subgraph AG1 ["2 · Agent #1 — Triage & Dispatch"]
+        E["Lexical cosine router over word + bigram counts<br/>0.49 ms measured from outside"]
+        F["🔒 PROTOCOL LOCKED · AHA-BLS cardiac arrest"]
+        G["🚨 Agonal-gasping override · MARCH trauma order"]
+        H["📟 911 CAD packet — SIMULATED by default<br/>live relays opt-in via .env"]
+        E --> F --> G --> H
     end
 
-    subgraph CLASSIFICATION ["3. Sub-10ms Intent Routing"]
-        D["🎯 Fast Semantic Vector Router\n(Cosine Similarity ~4ms)"]
-        C --> D
+    subgraph AG2 ["3 · Agent #2 — Safety Coach · deterministic, no LLM"]
+        I["🔊 'Don't panic. 911 CAD dispatch has been alerted<br/>with your exact GPS location…'"]
+        J["Pre-rendered lines, one voice · trigger → sound 21 ms"]
+        K["❤️ 110 BPM metronome, ducked -4 dB under speech"]
+        L["Depth target ≥ 2.0 in · 2-minute rescuer swap"]
+        I --> J --> K --> L
     end
 
-    subgraph SAFETY_SHIELD ["4. The Safety Shield (Two Brains. One Boundary)"]
-        direction TB
-        LOCK["🔒 PROTOCOL LOCK ENGAGED: AHA-BLS Sudden Cardiac Arrest"]
-        
-        subgraph BRAIN_1 ["BRAIN #1: Deterministic Engine (Medical Path)"]
-            E1["⚡ Zero-Latency Pre-Recorded Directives (~15ms)"]
-            E2["🔊 Voice: 'Call 911 now on speaker! Roll flat. Push center of chest.'"]
-            E3["❤️ 110 BPM Audiovisual Metronome Engine"]
-            E4["🚨 Agonal Gasping Detector"]
-        end
-
-        subgraph BRAIN_2 ["BRAIN #2: AssemblyAI Voice Agent API (~1s Dynamic Turn-Taking)"]
-            F1["🧠 Native WebSocket (Universal-3 Pro STT + LLM + TTS + Turn-Taking)"]
-            F2["💬 Dynamic In-Crisis Q&A: 'Did I break a rib?' ➡️ 'Rib pop is normal. Keep pushing!'"]
-            F3["📋 Paramedic EMS Handoff Generation"]
-            F4["🧘 Post-Event Grounding & Breathing Support"]
-        end
-
-        LOCK --> BRAIN_1
-        LOCK -.-> BRAIN_2
+    subgraph AG3 ["4 · Agent #3 — Clinical Companion"]
+        M["🧠 Groq LPU qwen · 0.38 s measured end to end"]
+        N["🛡️ Safety gate: ≤ 18 words · never 'stop compressions'<br/>no doses · no pulse checks"]
+        O["⚡ Offline reflex: 26 scripted answers in 0.7 ms"]
+        M --> N
+        O --> N
     end
 
-    subgraph OUTPUT_TIER ["5. Dual Interface Outputs & Telemetry"]
-        G1["🔊 Phone Speaker: Acoustic 110 BPM Clicks + Ducked Audio Directives / Voice Agent"]
-        G2["📱 3D Interactive Cockpit: Realistic Patient Body + Interlocked Hands (110 BPM 360° Orbit)"]
-        G3["📊 Live Latency Telemetry: Protocol: ~15ms · AssemblyAI Live Agent: ~1.0s"]
-        G4["🚨 One-Tap 911 Speakerphone Emergency Dispatch Trigger"]
+    subgraph OUT ["5 · What the rescuer gets"]
+        P["🔊 Speaker: clicks + spoken directives, one human voice"]
+        Q["📱 Cockpit: clinical pacing feed · BPM ring · depth gauge"]
+        R["📊 Telemetry: routing 0.5 ms · voice 21 ms · companion 0.38 s"]
+        S["🚨 Simulated 911 CAD bar, always on screen"]
     end
 
-    subgraph EMS_HANDOFF ["6. Paramedic Transfer"]
-        H["🗣️ User: 'Paramedics are walking in!'"]
-        I["⏱️ Timers Freeze + Event Timeline Finalized"]
-        J["📄 AI-Generated EMS Handoff Card Rendered on HUD"]
+    subgraph EMS ["6 · Paramedic handoff"]
+        T["🗣️ 'The paramedics are here!'"]
+        U["⏱️ Timers freeze · compression count locked"]
+        V["📄 EMS handoff card + incident timeline"]
     end
 
     A --> B
-    D --> LOCK
-    BRAIN_1 --> G1
-    BRAIN_1 --> G2
-    BRAIN_1 --> G3
-    BRAIN_1 --> G4
-    G1 & G2 --> H
-    H --> I
-    I --> BRAIN_2
-    BRAIN_2 --> J
+    D --> E
+    F --> I
+    D -.->|"question, not a command"| M
+    N --> P
+    L --> P
+    L --> Q
+    L --> R
+    H --> S
+    P --> T
+    T --> U --> V
 ```
 
 * **The Critical Medical Path (Pre-Recorded Directives ~15ms ➡️ FSM ➡️ HUD/Audio):** Generative AI is completely removed from clinical decisions. Medical actions are 100% deterministic, zero-hallucination, and protocol-locked to AHA guidelines.
