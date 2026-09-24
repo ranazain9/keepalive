@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { loadClipVoice, resolveClipId, playClip, hasClips } from '../audio/clipVoice';
+import { loadClipVoice, resolveClipId, playClip, speakLive, hasClips } from '../audio/clipVoice';
 
 /**
  * useRescueState
@@ -40,6 +40,10 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
   const activeUtteranceRef = useRef(null);
   const audioCtxRef = useRef(null);
   const clipChainRef = useRef(Promise.resolve());
+  // Mirrors of the two state values the safety gate needs, readable from inside
+  // the promise chain without re-creating the callback on every render.
+  const isParamedicLockedRef = useRef(false);
+  const activeIntentRef = useRef(null);
 
   const ensureAudioContext = useCallback(() => {
     if (!audioCtxRef.current) {
@@ -98,6 +102,51 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
         });
 
       return true;
+    },
+    [ensureAudioContext, onDuckAudio]
+  );
+
+  /**
+   * An answer with no clip — Groq worded it on the fly. Ask /speak to voice it
+   * in the same voice as the recordings; if that is not deployed, hand it to
+   * speech synthesis.
+   */
+  const speakLiveQueued = useCallback(
+    (text, onEnd, fallback) => {
+      ensureAudioContext();
+      clipChainRef.current = clipChainRef.current
+        .then(() =>
+          speakLive(text, {
+            protocolState: isParamedicLockedRef.current
+              ? 'handoff'
+              : activeIntentRef.current
+              ? 'active'
+              : 'idle',
+            onStart: () => {
+              window.__keepalive_isSpeaking = true;
+              if (onDuckAudio) onDuckAudio(true);
+            },
+            onSpokenText: (spoken) => {
+              // What the gate actually lets through is what the echo filter must match.
+              lastSpokenTextRef.current = spoken;
+              window.__keepalive_lastSpokenText = spoken;
+            },
+          })
+        )
+        .then((spoken) => {
+          window.__keepalive_isSpeaking = false;
+          if (onDuckAudio) onDuckAudio(false);
+          if (!spoken) {
+            fallback();
+            return;
+          }
+          if (onEnd) onEnd();
+        })
+        .catch(() => {
+          window.__keepalive_isSpeaking = false;
+          if (onDuckAudio) onDuckAudio(false);
+          fallback();
+        });
     },
     [ensureAudioContext, onDuckAudio]
   );
@@ -253,6 +302,8 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
         processSpeechQueue();
       };
       if (speakWithClip(text, options, onEnd, synthesise)) return;
+      speakLiveQueued(text, onEnd, synthesise);
+      return;
 
       if (!window.speechSynthesis) return;
 
@@ -272,7 +323,7 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
       }
       processSpeechQueue();
     },
-    [processSpeechQueue, speakWithClip]
+    [processSpeechQueue, speakWithClip, speakLiveQueued]
   );
 
   // Spoken directives & companion wrappers
@@ -320,8 +371,10 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
     if (window.speechSynthesis) window.speechSynthesis.cancel();
 
     setActiveIntent(null);
+    activeIntentRef.current = null;
     setProtocolStep(1);
     setIsParamedicLocked(false);
+    isParamedicLockedRef.current = false;
     setDirective('Voice agent ready. State what happened to begin.');
     setCompanionMessage(null);
     setIsAgonalAlert(false);
@@ -345,7 +398,10 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
       // 1. Triage Intent & Latency
       if (data.triage) {
         setTriageData(data.triage);
-        if (data.triage.intent) setActiveIntent(data.triage.intent);
+        if (data.triage.intent) {
+          setActiveIntent(data.triage.intent);
+          activeIntentRef.current = data.triage.intent;
+        }
         if (data.triage.triage_metadata?.agonal_respiration || data.triage.is_agonal_breathing) {
           setIsAgonalAlert(true);
         }
@@ -449,6 +505,7 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
         data.system_locked
       ) {
         setIsParamedicLocked(true);
+        isParamedicLockedRef.current = true;
         if (onStopCPR) onStopCPR();
 
         const handoff = data.handoff_card || data.ems_handoff_card || {
@@ -467,6 +524,7 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
         speakCompanion(finalSpeech, () => {
           console.log('🔒 Paramedic concluding response completed. System is locked in EMS handoff mode.');
           setIsParamedicLocked(true);
+        isParamedicLockedRef.current = true;
           setAgent1Status('CLOSED_HANDED_OFF');
           setAgent2Status('PARAMEDICS_ARRIVED_LOCKED');
           setAgent3Status('INCIDENT_CONCLUDED');
