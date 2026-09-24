@@ -36,7 +36,7 @@ class AppConfig(BaseModel):
     CAD_PROVIDER: str = os.getenv("CAD_PROVIDER", "MOCK")  # MOCK, RAPIDSOS, WEBHOOK, TWILIO, NTFY
     CAD_WEBHOOK_URL: str = os.getenv("CAD_WEBHOOK_URL", "")
     RAPIDSOS_API_KEY: str = os.getenv("RAPIDSOS_API_KEY", "")
-    NTFY_TOPIC: str = os.getenv("NTFY_TOPIC", "MWjc3TasJqBWGh10")
+    NTFY_TOPIC: str = os.getenv("NTFY_TOPIC", "")
     
     # Twilio Telephony Configuration (Optional real calls/SMS)
     TWILIO_ACCOUNT_SID: str = os.getenv("TWILIO_ACCOUNT_SID", "")

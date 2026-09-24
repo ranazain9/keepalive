@@ -127,7 +127,7 @@ def _dispatch_via_twilio(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 def _dispatch_to_ntfy(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Transmits high-priority emergency dispatch push notification to ntfy.sh topic with rich visual formatting."""
-    topic = (config.NTFY_TOPIC or "MWjc3TasJqBWGh10").strip()
+    topic = (config.NTFY_TOPIC or "").strip()
     if not topic:
         return {"status": "NO_NTFY_TOPIC"}
         
