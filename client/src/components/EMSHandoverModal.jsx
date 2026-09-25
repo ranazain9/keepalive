@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { speakLive, stopLive } from '../audio/clipVoice';
 import {
   Ambulance,
   CheckCircle2,
@@ -120,27 +121,43 @@ export function EMSHandoverModal({
     URL.revokeObjectURL(url);
   };
 
-  const toggleReadAloud = () => {
-    if (!('speechSynthesis' in window)) return;
-
+  const toggleReadAloud = async () => {
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      stopLive();
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       setIsSpeaking(false);
-    } else {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(verbalReport);
-      u.rate = 1.02;
-      u.pitch = 1.0;
-      u.onend = () => setIsSpeaking(false);
-      u.onerror = () => setIsSpeaking(false);
-      setIsSpeaking(true);
-      window.speechSynthesis.speak(u);
+      return;
     }
+
+    setIsSpeaking(true);
+
+    // The handover briefing is read in the same voice as everything else. It is
+    // built from the incident log, so "briefing" keeps it whole — the
+    // conversational three-sentence cap would drop clinical facts.
+    const spoken = await speakLive(verbalReport, { protocolState: 'briefing' });
+    if (spoken) {
+      setIsSpeaking(false);
+      return;
+    }
+
+    // /speak not deployed: the browser reads it, as before.
+    if (!('speechSynthesis' in window)) {
+      setIsSpeaking(false);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(verbalReport);
+    u.rate = 1.02;
+    u.pitch = 1.0;
+    u.onend = () => setIsSpeaking(false);
+    u.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(u);
   };
 
   // Cleanup speech on unmount
   useEffect(() => {
     return () => {
+      stopLive();
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
