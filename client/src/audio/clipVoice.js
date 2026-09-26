@@ -139,6 +139,19 @@ export function preloadClips(ids) {
  * caller can fall back to speech synthesis. After one 404 it stops asking.
  */
 let liveUnavailable = false;
+let liveSources = [];
+let liveCancelled = false;
+
+/** Stop a live answer that is currently playing. */
+export function stopLive() {
+  liveCancelled = true;
+  liveSources.forEach((s) => {
+    try {
+      s.stop();
+    } catch (e) {}
+  });
+  liveSources = [];
+}
 
 export async function speakLive(text, { protocolState = 'active', onStart, onSpokenText } = {}) {
   if (!ctx || liveUnavailable || !text) return false;
@@ -177,7 +190,9 @@ export async function speakLive(text, { protocolState = 'active', onStart, onSpo
 
   const RATE = 24000;
   const reader = res.body.getReader();
+  liveCancelled = false;
   const sources = [];
+  liveSources = sources;
   let playAt = 0;
   let odd = null; // a sample split across two chunks
   let started = false;
@@ -219,6 +234,10 @@ export async function speakLive(text, { protocolState = 'active', onStart, onSpo
 
   try {
     for (;;) {
+      if (liveCancelled) {
+        await reader.cancel();
+        return started;
+      }
       const { done, value } = await reader.read();
       if (done) break;
       schedule(value);
@@ -235,7 +254,7 @@ export async function speakLive(text, { protocolState = 'active', onStart, onSpo
   if (!started) return false;
   const remaining = Math.max(0, playAt - ctx.currentTime);
   await new Promise((r) => setTimeout(r, remaining * 1000));
-  return true;
+  return !liveCancelled;
 }
 
 export function hasClips() {
