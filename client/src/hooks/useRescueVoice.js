@@ -142,8 +142,27 @@ export function useRescueVoice({
     setError(null);
     speechStartTimeRef.current = Date.now();
 
+    // 1. AudioContext FIRST, synchronously, while we are still inside the tap.
+    //    iOS only honours resume() during a user gesture, and an `await` ends
+    //    that gesture — so a context created after getUserMedia stays suspended
+    //    for ever: permission is granted, no audio is ever processed, and the
+    //    UI never changes. This is why the mic did nothing in Safari.
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioCtx();
+    audioCtxRef.current = ctx;
+    if (ctx.state === 'suspended') {
+      ctx.resume();            // deliberately not awaited: stay inside the gesture
+    }
+    // A one-sample silent buffer is the gesture iOS actually unlocks on.
     try {
-      // 1. Microphone stream
+      const kick = ctx.createBufferSource();
+      kick.buffer = ctx.createBuffer(1, 1, 22050);
+      kick.connect(ctx.destination);
+      kick.start(0);
+    } catch (e) {}
+
+    try {
+      // 2. Microphone stream
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -153,13 +172,11 @@ export function useRescueVoice({
       });
       mediaStreamRef.current = stream;
 
-      // 2. AudioContext
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      const ctx = new AudioCtx();
+      // Safari can still hand back a suspended context; try once more now that
+      // permission has been granted.
       if (ctx.state === 'suspended') {
         await ctx.resume();
       }
-      audioCtxRef.current = ctx;
       const nativeSampleRate = ctx.sampleRate;
 
       // 3. Connect to FastAPI WebSocket (/ws/triage)
@@ -383,7 +400,37 @@ export function useRescueVoice({
       setIsListening(true);
     } catch (err) {
       console.error('Microphone error:', err);
-      setError('Microphone access denied or not available.');
+
+      // Leave nothing half-started, or the guard at the top of this function
+      // makes every later tap return silently — which looks like a dead button.
+      isListeningRef.current = false;
+      try {
+        ctx.close();
+      } catch (e) {}
+      audioCtxRef.current = null;
+      if (wsRef.current) {
+        try {
+          wsRef.current.close();
+        } catch (e) {}
+        wsRef.current = null;
+      }
+      if (mediaStreamRef.current) {
+        try {
+          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        } catch (e) {}
+        mediaStreamRef.current = null;
+      }
+
+      // Say which of the three it was: on a phone the console is not available,
+      // and "nothing happened" is not something a judge can act on.
+      const name = err && err.name;
+      setError(
+        name === 'NotAllowedError'
+          ? 'Microphone blocked. Allow it for this site in your browser settings, then reload.'
+          : name === 'NotFoundError'
+          ? 'No microphone found on this device.'
+          : `Microphone unavailable${name ? ` (${name})` : ''}. Try reloading the page.`
+      );
     }
   }, [userLocation, userLat, userLon]);
 

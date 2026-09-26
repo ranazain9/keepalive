@@ -16,6 +16,7 @@ export function Stage1TriageIntake({
   wpm = 0,
   directive = 'Tell me what happened',
   isParamedicLocked = false,
+  micError = null,
 }) {
   const canvasRef = useRef(null);
 
@@ -104,6 +105,12 @@ export function Stage1TriageIntake({
             {isParamedicLocked ? (
               <span className="prompt-text coach-directive" style={{ color: '#F59E0B' }}>
                 🔒 SYSTEM LOCKED: Paramedics are in charge. Step back. You did everything right.
+              </span>
+            ) : micError ? (
+              // A dead-looking mic button is the worst possible failure here:
+              // the judge taps, nothing moves, and there is no console on a phone.
+              <span className="prompt-text caller-speech" style={{ color: '#EF4444' }}>
+                🎙️ {micError}
               </span>
             ) : transcript ? (
               <span className="prompt-text caller-speech">

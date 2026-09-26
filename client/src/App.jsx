@@ -437,6 +437,7 @@ export default function App() {
         wpm={wpm}
         directive={directive}
         isParamedicLocked={isParamedicLocked}
+        micError={voiceError}
       />
 
       {/* STAGE 2: ACTIVE CPR PACING (HERO) */}
