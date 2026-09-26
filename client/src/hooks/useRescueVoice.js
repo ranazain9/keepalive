@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
+import { getSharedAudioContext, primeAudioContext } from '../audio/audioContext';
 
 /**
  * Downsample native browser audio (44.1k/48k) to pristine 16kHz Int16 for AssemblyAI
@@ -105,12 +106,9 @@ export function useRescueVoice({
       } catch (e) {}
       processorRef.current = null;
     }
-    if (audioCtxRef.current) {
-      try {
-        audioCtxRef.current.close();
-      } catch (e) {}
-      audioCtxRef.current = null;
-    }
+    // The context is shared with the metronome and the voice — dropping the
+    // reference is enough; closing it would silence the rest of the app.
+    audioCtxRef.current = null;
     if (mediaStreamRef.current) {
       try {
         mediaStreamRef.current.getTracks().forEach((t) => t.stop());
@@ -147,19 +145,10 @@ export function useRescueVoice({
     //    that gesture — so a context created after getUserMedia stays suspended
     //    for ever: permission is granted, no audio is ever processed, and the
     //    UI never changes. This is why the mic did nothing in Safari.
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    const ctx = new AudioCtx();
+    // The shared context, resumed and primed synchronously — a new one per tap
+    // exhausts Safari's per-page limit and the next call throws InvalidStateError.
+    const ctx = primeAudioContext() || getSharedAudioContext();
     audioCtxRef.current = ctx;
-    if (ctx.state === 'suspended') {
-      ctx.resume();            // deliberately not awaited: stay inside the gesture
-    }
-    // A one-sample silent buffer is the gesture iOS actually unlocks on.
-    try {
-      const kick = ctx.createBufferSource();
-      kick.buffer = ctx.createBuffer(1, 1, 22050);
-      kick.connect(ctx.destination);
-      kick.start(0);
-    } catch (e) {}
 
     try {
       // 2. Microphone stream
@@ -404,10 +393,7 @@ export function useRescueVoice({
       // Leave nothing half-started, or the guard at the top of this function
       // makes every later tap return silently — which looks like a dead button.
       isListeningRef.current = false;
-      try {
-        ctx.close();
-      } catch (e) {}
-      audioCtxRef.current = null;
+      audioCtxRef.current = null;   // shared: disconnect below, never close
       if (wsRef.current) {
         try {
           wsRef.current.close();
