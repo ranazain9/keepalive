@@ -14,6 +14,8 @@
  * false and the caller falls back to speech synthesis, exactly as before.
  */
 
+import { getSharedAudioContext, resumeSharedAudioContext } from './audioContext';
+
 const MANIFEST_URL = '/audio/manifest.json';
 
 let manifest = null;
@@ -34,12 +36,19 @@ function normalise(text) {
 
 let byText = new Map();
 
-export async function loadClipVoice(audioContext) {
-  if (audioContext && !ctx) {
-    ctx = audioContext;
+function ensureContext(audioContext) {
+  const next = audioContext || ctx || getSharedAudioContext();
+  if (!next) return null;
+  if (next !== ctx || !master) {
+    ctx = next;
     master = ctx.createGain();
     master.connect(ctx.destination);
   }
+  return ctx;
+}
+
+export async function loadClipVoice(audioContext) {
+  ensureContext(audioContext);
   if (manifest) return manifest;
   if (loading) return loading;
 
@@ -87,7 +96,7 @@ async function buffer(id) {
  */
 export async function playClip({ assetId, text, onStart, onEnd } = {}) {
   await loadClipVoice();
-  if (!ctx) return false;
+  if (!ensureContext()) return false;
 
   const id = resolveClipId(assetId, text);
   if (!id) return false;
@@ -123,7 +132,7 @@ export async function playClip({ assetId, text, onStart, onEnd } = {}) {
 
 /** Warm the lines the demo opens with, so the first one is instant. */
 export function preloadClips(ids) {
-  if (!ctx || !manifest) return;
+  if (!ensureContext() || !manifest) return;
   ids.filter((id) => manifest.clips[id]).forEach((id) => buffer(id).catch(() => {}));
 }
 
@@ -154,7 +163,8 @@ export function stopLive() {
 }
 
 export async function speakLive(text, { protocolState = 'active', onStart, onSpokenText } = {}) {
-  if (!ctx || liveUnavailable || !text) return false;
+  if (!ensureContext() || liveUnavailable || !text) return false;
+  resumeSharedAudioContext();
 
   let res;
   try {
