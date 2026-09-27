@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { loadClipVoice, resolveClipId, playClip, speakLive, hasClips } from '../audio/clipVoice';
+import { getSharedAudioContext } from '../audio/audioContext';
 
 /**
  * useRescueState
@@ -47,12 +48,7 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
 
   const ensureAudioContext = useCallback(() => {
     if (!audioCtxRef.current) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      audioCtxRef.current = new AudioCtx();
-      // iOS mutes Web Audio in silent mode unless the session is playback.
-      try {
-        if (navigator.audioSession) navigator.audioSession.type = 'playback';
-      } catch (e) {}
+      audioCtxRef.current = getSharedAudioContext();
       loadClipVoice(audioCtxRef.current);
     }
     if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
@@ -155,8 +151,7 @@ export function useRescueState({ onStartCPR, onStopCPR, onResetMetronome, onDuck
   const playCompanionChime = useCallback(() => {
     try {
       if (!audioCtxRef.current) {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        audioCtxRef.current = new AudioCtx();
+        audioCtxRef.current = getSharedAudioContext();
       }
       if (audioCtxRef.current.state === 'suspended') {
         audioCtxRef.current.resume();

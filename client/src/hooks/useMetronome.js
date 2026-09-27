@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
+import { getSharedAudioContext } from '../audio/audioContext';
 
 /**
  * useMetronome
@@ -19,8 +20,7 @@ export function useMetronome(initialBpm = 110) {
 
   const getAudioContext = useCallback(() => {
     if (!audioCtxRef.current) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      audioCtxRef.current = new AudioCtx();
+      audioCtxRef.current = getSharedAudioContext();
     }
     // Set iOS audioSession to playback to override hardware silent switch
     try {
