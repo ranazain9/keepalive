@@ -89,6 +89,7 @@ export function useRescueVoice({
   const mediaStreamRef = useRef(null);
   const audioCtxRef = useRef(null);
   const processorRef = useRef(null);
+  const micOwnContextRef = useRef(null);   // only set when we had to make our own
   const speechStartTimeRef = useRef(null);
   const isListeningRef = useRef(false);
   const isAAIStreamingRef = useRef(false);
@@ -106,8 +107,14 @@ export function useRescueVoice({
       } catch (e) {}
       processorRef.current = null;
     }
-    // The context is shared with the metronome and the voice — dropping the
-    // reference is enough; closing it would silence the rest of the app.
+    // The shared context stays open — the metronome and the voice use it too.
+    // A context we created for the microphone alone is ours to close.
+    if (micOwnContextRef.current) {
+      try {
+        micOwnContextRef.current.close();
+      } catch (e) {}
+      micOwnContextRef.current = null;
+    }
     audioCtxRef.current = null;
     if (mediaStreamRef.current) {
       try {
@@ -147,18 +154,24 @@ export function useRescueVoice({
     //    UI never changes. This is why the mic did nothing in Safari.
     // The shared context, resumed and primed synchronously — a new one per tap
     // exhausts Safari's per-page limit and the next call throws InvalidStateError.
-    const ctx = primeAudioContext() || getSharedAudioContext();
+    let ctx = primeAudioContext() || getSharedAudioContext();
     audioCtxRef.current = ctx;
 
     try {
       // 2. Microphone stream
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+      } catch (micErr) {
+        if (micErr) micErr.__keepaliveStep = 'getUserMedia';
+        throw micErr;
+      }
       mediaStreamRef.current = stream;
 
       // Safari can still hand back a suspended context; try once more now that
@@ -166,7 +179,7 @@ export function useRescueVoice({
       if (ctx.state === 'suspended') {
         await ctx.resume();
       }
-      const nativeSampleRate = ctx.sampleRate;
+
 
       // 3. Connect to FastAPI WebSocket (/ws/triage)
       const locQuery = encodeURIComponent(userLocation);
@@ -337,7 +350,32 @@ export function useRescueVoice({
       }
 
       // 5. Audio Pipeline: stream mic -> processor (4096 samples = ~85-93ms) -> 16kHz PCM downsampler -> WebSocket
-      const source = ctx.createMediaStreamSource(stream);
+      // WebKit throws InvalidStateError from createMediaStreamSource when the
+      // context's sample rate does not match the microphone's. The shared
+      // context is created before the mic exists, so on iOS the two can differ.
+      // Fall back to a context built after the stream, which always matches.
+      let source;
+      try {
+        source = ctx.createMediaStreamSource(stream);
+      } catch (mismatch) {
+        console.warn(
+          `[mic] shared context at ${ctx.sampleRate} Hz rejected the stream`,
+          mismatch && mismatch.name
+        );
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const micCtx = new AudioCtx();
+        if (micCtx.state === 'suspended') await micCtx.resume();
+        ctx = micCtx;
+        audioCtxRef.current = micCtx;
+        micOwnContextRef.current = micCtx;
+        try {
+          source = micCtx.createMediaStreamSource(stream);
+        } catch (secondTry) {
+          if (secondTry) secondTry.__keepaliveStep = 'createMediaStreamSource';
+          throw secondTry;
+        }
+      }
+
       const processor = ctx.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
 
@@ -348,6 +386,7 @@ export function useRescueVoice({
       processor.connect(silentSink);
       silentSink.connect(ctx.destination);
 
+      const nativeSampleRate = ctx.sampleRate;
       let pcmBuffer = [];
 
       processor.onaudioprocess = (e) => {
@@ -410,12 +449,13 @@ export function useRescueVoice({
       // Say which of the three it was: on a phone the console is not available,
       // and "nothing happened" is not something a judge can act on.
       const name = err && err.name;
+      const step = err && err.__keepaliveStep ? ` at ${err.__keepaliveStep}` : '';
       setError(
         name === 'NotAllowedError'
           ? 'Microphone blocked. Allow it for this site in your browser settings, then reload.'
           : name === 'NotFoundError'
           ? 'No microphone found on this device.'
-          : `Microphone unavailable${name ? ` (${name})` : ''}. Try reloading the page.`
+          : `Microphone unavailable${name ? ` (${name}${step})` : ''}. Try reloading the page.`
       );
     }
   }, [userLocation, userLat, userLon]);
