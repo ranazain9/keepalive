@@ -152,8 +152,13 @@ export function useRescueVoice({
     //    that gesture — so a context created after getUserMedia stays suspended
     //    for ever: permission is granted, no audio is ever processed, and the
     //    UI never changes. This is why the mic did nothing in Safari.
-    // The shared context, resumed and primed synchronously — a new one per tap
-    // exhausts Safari's per-page limit and the next call throws InvalidStateError.
+    // Ensure iOS audioSession is configured for simultaneous playback + capture
+    try {
+      if (typeof navigator !== 'undefined' && 'audioSession' in navigator && navigator.audioSession) {
+        navigator.audioSession.type = 'play-and-record';
+      }
+    } catch (e) {}
+
     let ctx = primeAudioContext() || getSharedAudioContext();
     audioCtxRef.current = ctx;
 
@@ -161,6 +166,9 @@ export function useRescueVoice({
       // 2. Microphone stream
       let stream;
       try {
+        if (typeof navigator !== 'undefined' && 'audioSession' in navigator && navigator.audioSession) {
+          navigator.audioSession.type = 'play-and-record';
+        }
         stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
@@ -169,8 +177,17 @@ export function useRescueVoice({
           },
         });
       } catch (micErr) {
-        if (micErr) micErr.__keepaliveStep = 'getUserMedia';
-        throw micErr;
+        // Fallback for iOS Safari if strict constraints or initial state failed:
+        console.warn('[mic] Initial getUserMedia failed, attempting fallback { audio: true }...', micErr);
+        try {
+          if (typeof navigator !== 'undefined' && 'audioSession' in navigator && navigator.audioSession) {
+            navigator.audioSession.type = 'play-and-record';
+          }
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (fallbackErr) {
+          if (fallbackErr) fallbackErr.__keepaliveStep = 'getUserMedia';
+          throw fallbackErr;
+        }
       }
       mediaStreamRef.current = stream;
 

@@ -22,10 +22,15 @@ export function getSharedAudioContext() {
 
   shared = new AudioCtx();
 
-  // Without this, iOS mutes Web Audio whenever the ringer switch is silent —
-  // which is exactly how a phone lies in a pocket before an emergency.
+  // On iOS, setting audioSession.type overrides the hardware silent switch.
+  // CRITICAL: We must use 'play-and-record' instead of 'playback'.
+  // Setting 'playback' locks the session to output-only, causing WebKit to throw
+  // InvalidStateError ("AudioSession category is not compatible with audio capture")
+  // whenever getUserMedia is called. 'play-and-record' allows both mic input and audio output.
   try {
-    if (navigator.audioSession) navigator.audioSession.type = 'playback';
+    if (typeof navigator !== 'undefined' && 'audioSession' in navigator && navigator.audioSession) {
+      navigator.audioSession.type = 'play-and-record';
+    }
   } catch (e) {}
 
   return shared;

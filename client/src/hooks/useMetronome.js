@@ -22,10 +22,11 @@ export function useMetronome(initialBpm = 110) {
     if (!audioCtxRef.current) {
       audioCtxRef.current = getSharedAudioContext();
     }
-    // Set iOS audioSession to playback to override hardware silent switch
+    // Set iOS audioSession to play-and-record to override hardware silent switch
+    // without blocking microphone capture (getUserMedia)
     try {
       if ('audioSession' in navigator && navigator.audioSession) {
-        navigator.audioSession.type = 'playback';
+        navigator.audioSession.type = 'play-and-record';
       }
     } catch (e) {}
     if (audioCtxRef.current.state === 'suspended') {
