@@ -24,7 +24,7 @@
 
 > ⚡ **Verified Hackathon Reviewer Benchmark (Tested on Live Render Production Deployment):**
 > - **Triage Routing Latency:** **0.49 ms** (instant sub-millisecond trauma/cardiac intent classification & 911 dispatch)
-> - **Groq LPU Companion Answer:** **0.38 s** (9 words spoken with compassionate doctor persona enforcing Section 4 $\le 18$ words compliance)
+> - **Groq LPU Companion Answer:** **0.38 s** (9 words spoken with bounded companion tone enforcing Section 4 $\le 18$ words compliance)
 > - **CAD & Geolocation:** Live GPS reverse geocoded + CAD standby (`CAD_PROVIDER=MOCK` configured in `render.yaml`)
 
 ---
@@ -37,14 +37,14 @@ Open the live production cockpit at **[https://keepalive-dpt7.onrender.com](http
 1. Click **"Click to Speak"** (or allow browser microphone access).
 2. Say: *"Help! My dad just collapsed. He's not breathing!"* $\to$ Agent 1 triages in **0.49 ms** & Agent 2 delivers Step 1.
 3. Say: *"Hands placed on chest, ready!"* $\to$ Agent 2 begins live 110 BPM metronome & sternum depth ring.
-4. Say: *"I heard a cracking sound in his chest!"* $\to$ Agent 3 (Groq LPU) answers in **0.38 s** (*"That is normal. Keep pushing hard. Push to the beat."*).
+4. Say: *"I heard a cracking sound in his chest!"* $\to$ Agent 3 (Groq LPU) answers in **0.38 s** (*"A rib pop can happen during effective CPR. Do not stop. Keep pushing to the beat."*).
 5. Say: *"The paramedics are here!"* $\to$ System locks permanently, halts metronome, and renders the electronic EMS handover card.
 
 ### 🔇 Option B: Silent Demo (One-Click Simulation — No Mic Required)
 In an office, without a mic, or denied browser audio permissions? Use the **JUDGE / SILENT DEMO** bar at the top of the cockpit:
 - Click **🚨 1. "Dad collapsed, not breathing"** $\to$ triggers cardiac arrest triage + CAD alert + Step 1 BLS instruction.
 - Click **👐 2. "Hands placed on chest, ready"** $\to$ activates 110 BPM CPR pacing metronome & depth visualizer.
-- Click **🩺 3. "I heard a cracking rib sound"** $\to$ queries Groq LPU doctor persona with $\le 18$-word clinical reassurance.
+- Click **🩺 3. "I heard a cracking rib sound"** $\to$ queries the Groq LPU companion for $\le 18$-word clinical reassurance.
 - Click **🚑 4. "The paramedics are here"** $\to$ completes the clinical handoff, stops pacing, and opens the EMS tablet card.
 - *Or click **▶ Auto-Run Demo (70s)** for a hands-free automated video take simulation!*
 
@@ -59,7 +59,7 @@ Standard 911 calls are voice-only and prone to pacing confusion. First-aid mobil
 **KeepAlive** is a zero-touch, hands-free emergency voice cockpit engineered with a specialized **3-Agent Resuscitation Architecture**:
 1. **Agent #1 (Triage & CAD Dispatcher - Sub-1.5ms):** Classifies trauma & cardiac arrest in milliseconds, locks the clinical protocol, fires autonomous 911 CAD dispatch with live GPS, locates physical AEDs, and immediately hands off/closes to eliminate speech clashing.
 2. **Agent #2 (Safety Coach & 110 BPM Metronome - Sub-0.5ms):** Authoritative physical commands (AHA 2025 BLS Guidelines) with continuous Web Audio synthetic 110 BPM metronome clicks, synchronized anatomical manikin sternum displacement, and 2-minute fatigue swap alerts.
-3. **Agent #3 (Clinical Companion & Groq LPU Doctor - ~200ms):** Answers rescuer panic doubts (*"never done CPR before"*, *"broken ribs"*, *"vomiting"*, *"am I pressing too hard"*) using **Groq LPU (`qwen/qwen3.8-27b`)** with a compassionate human doctor persona. Enforces Section 4 Clinical Safety Rules ($\le 18$ words, zero delay, never halting compressions) with instant sub-3ms offline fallback.
+3. **Agent #3 (Clinical Companion, Groq LPU - ~200 ms):** Answers rescuer panic doubts (*"never done CPR before"*, *"broken ribs"*, *"vomiting"*, *"am I pressing too hard"*) using **Groq LPU (`qwen/qwen3.8-27b`)** as a bounded companion — it reassures and answers, it never diagnoses. Enforces Section 4 Clinical Safety Rules ($\le 18$ words, zero delay, never halting compressions) with instant sub-3ms offline fallback.
 
 ---
 
@@ -93,7 +93,7 @@ sequenceDiagram
     A3-->>Rescuer: "Don't panic. I will guide you. Heel on chest center, lock elbows, push to the beat."
 
     Rescuer->>A3: "I heard a crack, did I break a rib?"
-    A3-->>Rescuer: "That is normal. Keep pushing hard. Push to the beat."
+    A3-->>Rescuer: "A rib pop can happen during effective CPR. Do not stop."
 
     Rescuer->>A3: "The paramedics are here!"
     Note over A2: Halts 110 BPM Metronome
@@ -149,7 +149,7 @@ sequenceDiagram
 * **Novice Rescuer:** *"I don't know CPR, I've never done this!"*  
   $\to$ *"Don't panic. I will guide you. Heel on chest center, lock elbows, push to the beat."* (15 words)
 * **Cracking Ribs:** *"I heard a loud pop, did I break a rib?!"*  
-  $\to$ *"That is normal. Keep pushing hard. Push to the beat."* (9 words)
+  $\to$ *"A rib pop can happen during effective CPR. Do not stop. Keep pushing to the beat."* (9 words)
 * **Vomiting Airway:** *"He is throwing up, what do I do?"*  
   $\to$ *"Roll him on his side. Let it drain. Flip him back. Push to the beat."* (13 words)
 * **Fatigue / Exhaustion:** *"My arms are burning, I can't push anymore!"*  
@@ -251,6 +251,30 @@ py -3.13 -m unittest discover -s server/tests -p "test_*.py"
 *(All 60 tests execute and pass in ~2 seconds with sub-2ms benchmarks).*
 
 ---
+
+---
+
+## ⚠️ Prototype limitations
+
+Read this before judging the claims above — it is what we can and cannot stand behind.
+
+- **This is a hackathon prototype, not a medical device**, not a replacement for 911, and
+  not a certified emergency dispatch system.
+- **911 CAD dispatch is simulated.** `CAD_PROVIDER=MOCK` builds the incident packet locally
+  and sends it nowhere. The RAPIDSOS, TWILIO, WEBHOOK and NTFY adapters exist so a real
+  integration is a swap of one provider, but none of them is an authorised PSAP connection.
+- **The EMS handover follows the shape of a NEMSIS v3.5 record.** No NEMSIS compliance
+  testing has been run against it.
+- **Nearby AED data comes from OpenStreetMap via Overpass** and can be out of date;
+  availability has to be verified on the ground.
+- **The latency figures are stage timings, not an end-to-end voice round trip.** Routing is
+  measured inside the process; speech-to-text and the companion are network calls whose
+  latency depends on the connection.
+- **Clinical protocols are implemented for demonstration.** Production would need validation
+  by qualified medical, EMS and regulatory stakeholders.
+- The generative model never decides a medical action. It answers questions, behind a
+  deterministic gate that replaces anything unsafe before it is spoken.
+
 
 ## 📜 Clinical Guidelines & Governance
 * **American Heart Association (AHA):** *2020–2025 Focused Update on Basic Life Support (BLS) and CPR Quality (100–120 compressions/min).*

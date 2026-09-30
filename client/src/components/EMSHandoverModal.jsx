@@ -24,7 +24,8 @@ import {
 /**
  * EMSHandoverModal
  * High-Density Clinical Electronic Handover Tablet Interface for incoming paramedics.
- * Standardized to NEMSIS v3.5 & AHA 2020 BLS Clinical Handover guidelines.
+ * Modelled on the NEMSIS v3.5 ePCR shape and AHA 2020 BLS handover guidelines.
+ * Not a certified NEMSIS implementation: no compliance testing has been run.
  */
 export function EMSHandoverModal({
   isOpen = false,
@@ -240,7 +241,7 @@ export function EMSHandoverModal({
                     border: '1px solid rgba(56, 189, 248, 0.3)',
                   }}
                 >
-                  NEMSIS v3.5
+                  NEMSIS v3.5 STYLE
                 </span>
               </div>
               <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>
@@ -266,7 +267,7 @@ export function EMSHandoverModal({
               }}
             >
               <CheckCircle2 size={13} />
-              SCENE SECURED
+              HANDOFF READY
             </div>
             <button
               onClick={onClose}
@@ -739,7 +740,7 @@ export function EMSHandoverModal({
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748B', fontSize: '11px' }}>
             <CheckCircle2 size={13} color="#10B981" />
-            <span>Encrypted NEMSIS v3.5 Record · Ready for Med-Control</span>
+            <span>NEMSIS v3.5-style record · demo data · not a certified ePCR</span>
           </div>
 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>

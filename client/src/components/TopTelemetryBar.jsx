@@ -5,7 +5,7 @@ import React from 'react';
  * Replicates the top header pill from the clinical design mockup:
  * - Left: "SIMULATED 911 CAD: KEEPALIVE EN ROUTE (ETA 3M)" with pulsing red dot
  * - Center: 3-Way Theme Switcher (Clinical Light, Tactical Dark HUD, High-Contrast Emergency)
- * - Right: "LATENCY: 0.8MS"
+ * - Right: "TRIAGE ROUTING: 0.8MS" — the router alone, not the voice round trip
  */
 export function TopTelemetryBar({
   cadStatus = 'KEEPALIVE EN ROUTE (ETA 3M)',
@@ -52,7 +52,7 @@ export function TopTelemetryBar({
 
       {/* Right: Telemetry / Latency */}
       <div className="telemetry-right">
-        <span className="latency-label">LATENCY:</span>
+        <span className="latency-label">TRIAGE ROUTING:</span>
         <span className="latency-value">{latencyMs}</span>
       </div>
     </div>
