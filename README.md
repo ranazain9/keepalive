@@ -8,7 +8,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License: MIT" /></a>
   <a href="https://cpr.heart.org"><img src="https://img.shields.io/badge/Protocol-AHA%20BLS%20110%20BPM-orange?style=for-the-badge" alt="AHA BLS 110 BPM" /></a>
   <a href="https://groq.com/"><img src="https://img.shields.io/badge/Companion-Groq%20LPU%20(qwen%2Fqwen3.8--27b)-purple?style=for-the-badge" alt="Groq LPU" /></a>
-  <a href="https://github.com/ranazain9/keepalive"><img src="https://img.shields.io/badge/Tests-60%2F60%20Passing%20(100%25)-brightgreen?style=for-the-badge" alt="Tests" /></a>
+  <a href="https://github.com/ranazain9/keepalive"><img src="https://img.shields.io/badge/Tests-92%2F92%20Passing%20(100%25)-brightgreen?style=for-the-badge" alt="Tests" /></a>
 </p>
 
 > 🚑 **Live Production Cockpit:** **[https://keepalive-dpt7.onrender.com](https://keepalive-dpt7.onrender.com)**  
@@ -263,6 +263,24 @@ py -3.13 -m unittest discover -s server/tests -p "test_*.py"
 * **Icons:** [Lucide Icons](https://lucide.dev/) (ISC License).
 * **Typography:** Google Fonts (`Outfit`, `JetBrains Mono` under SIL Open Font License).
 * **Zero Proprietary 3D Assets:** All proprietary and third-party 3D models were fully purged from the repository to maintain 100% pure MIT open-source licensing integrity.
+
+---
+
+## 👥 Team & Contributions
+
+KeepAlive was built collaboratively for the **AssemblyAI Voice Agent Hackathon** on lablab.ai:
+
+* **Rana Zain Waseem** ([@ranazain9](https://github.com/ranazain9))
+  * **Core Architecture & Orchestration:** Designed the 3-Agent Resuscitation Architecture (Triage & CAD Dispatcher, Safety Coach, and Clinical Companion).
+  * **AssemblyAI Real-Time Engine:** Built the bidirectional 16kHz PCM streaming WebSocket pipeline with clinical medical terminology word-boosting.
+  * **Clinical Cockpit & HUD:** Implemented the full React/Vite cockpit, interactive visual pacer, live telemetry, and silent demo simulation bar.
+  * **CAD & EMS Dispatch:** Engineered the CAD dispatch integration, OpenStreetMap AED geolocation queries, and NEMSIS v3.5 handoff generator.
+
+* **Lev Horbatenko** ([@donainetworkdone](https://github.com/donainetworkdone))
+  * **Audio Pipeline & Human Voice:** Mastered and pre-rendered the 58 broadcast-quality ElevenLabs protocol and companion audio clips.
+  * **Web Audio & Mobile Optimization:** Engineered the unified browser AudioContext, iOS silent switch bypass (`play-and-record`), and screen wake-lock.
+  * **Clinical Safety Shield:** Co-authored the deterministic Section 4 safety gate (`server/safety_gate.py`) and the 29-case voice test suite.
+  * **Dynamic Voice Fallback:** Implemented the `/speak` TTS router and field-recorded demo audio measurements.
 
 ---
 
